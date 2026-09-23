@@ -21,6 +21,10 @@ h1{font-size:19px;margin:0;font-weight:600}
 main{padding:16px}
 .banner{background:#4a2c2c;color:#ffd9d9;border:1px solid #7a4141;border-radius:12px;
   padding:14px 16px;margin:16px 16px 0;font-size:18px;line-height:1.5}
+.update-bar{display:block;width:calc(100% - 32px);background:#1c4a3a;color:#d9ffe9;
+  border:1px solid #3a8a63;border-radius:12px;padding:14px 16px;margin:16px 16px 0;
+  font:600 18px/1.5 inherit;text-align:left;min-height:44px;cursor:pointer}
+.update-bar:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 .card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px}
 .time{font-size:34px;font-weight:700;letter-spacing:-.5px}
 .time-q{color:var(--warn)}
@@ -61,6 +65,7 @@ nav button[aria-current="true"]{color:var(--fg);font-weight:600}
 <body>
 <header><h1>캐나다 2026</h1><span class="stamp" id="stamp"></span></header>
 <div class="banner hidden" id="banner"></div>
+<button type="button" class="update-bar hidden" id="update-bar">새 안내문이 있습니다 — 새로고침</button>
 <main>
   <section id="view-now"></section>
   <section id="view-days" class="hidden"></section>
@@ -73,6 +78,41 @@ nav button[aria-current="true"]{color:var(--fg);font-weight:600}
   <button data-view="days">날짜</button>
   <button data-view="money">돈</button>
 </nav>
+<script>
+function showUpdateBar() {
+  var u = document.getElementById('update-bar');
+  if (u) u.classList.remove('hidden');
+}
+var updateBarBtn = document.getElementById('update-bar');
+if (updateBarBtn) updateBarBtn.addEventListener('click', function () { location.reload(); });
+
+// sw.js의 백그라운드 갱신 비교는 app.js가 data/guide.js를 import하는 순간부터
+// 이미 진행 중이다(모듈 그래프 로딩 자체가 이 fetch를 낸다). 그 fetch가 끝나면서
+// 쏘는 postMessage는 이 문서의 어떤 스크립트보다도 먼저 도착할 수 있다 — 브라우저
+// 프리로드 스캐너가 문서 순서와 무관하게 모듈과 그 import를 미리 fetch하기
+// 때문이다. 그래서 실시간 메시지는 "되면 좋은" 빠른 경로일 뿐, 진짜 보장은
+// sw.js가 캐시에 남겨 두는 플래그를 직접 확인하는 쪽이 한다 — 이건 듣고 있었냐와
+// 무관하게 언제 확인해도 집어갈 수 있다.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'sw-update') showUpdateBar();
+  });
+}
+if ('caches' in window) {
+  var checkUpdateFlag = function () {
+    caches.open('canada-2026-v1').then(function (c) {
+      c.match('./__update-flag__').then(function (flag) {
+        if (flag) { showUpdateBar(); c.delete('./__update-flag__'); }
+      });
+    }).catch(function () {});
+  };
+  // 이 페이지 자신의 로딩이 방금 막 플래그를 남겼을 수도 있어(위와 같은 이유),
+  // 바로 한 번 + 짧게 두 번 더 재확인한다. 못 잡아도 다음 오픈 때 확실히 잡힌다.
+  checkUpdateFlag();
+  setTimeout(checkUpdateFlag, 1500);
+  setTimeout(checkUpdateFlag, 4000);
+}
+</script>
 <script type="module" src="./app.js"></script>
 <script>
 // app.js가 아예 못 뜨는 경우(안내문 문법 오류 등)를 위한 마지막 방어선.

@@ -69,6 +69,12 @@ function fatal(err) {
 }
 
 try {
+  // 새 안내문 알림 배너(#update-bar)는 index.html의 일반 스크립트에서 처리한다.
+  // sw.js의 백그라운드 갱신 비교는 이 모듈이 data/guide.js를 import하는 순간부터
+  // 이미 시작되고, 그 fetch는 이 파일의 본문이 실행되기도 전에 끝나 postMessage를
+  // 쏠 수 있다 — 이 모듈 안에서 아무리 일찍 리스너를 붙여도 이미 늦을 수 있어서,
+  // 모듈 스크립트보다 먼저 파싱·실행되는 일반 <script>로 옮겼다.
+
   document.querySelectorAll('nav button').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-current', String(x === b)));
@@ -102,7 +108,11 @@ try {
   setInterval(paint, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) paint(); });
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+      .then(reg => { reg.update().catch(() => {}); })
+      .catch(() => {});
+  }
 } catch (err) {
   fatal(err);
 }

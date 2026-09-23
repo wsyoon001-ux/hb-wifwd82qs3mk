@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1720">
+<!-- 예약번호·숙소 주소·부재 기간이 들어 있다. 검색엔진에 올라가면 안 된다. -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>캐나다 2026</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{--bg:#0f1720;--card:#18222e;--fg:#eef3f8;--dim:#93a3b5;--ok:#5ec98a;--warn:#e8b84b;--line:#26333f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:18px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  padding:0 0 88px;word-break:keep-all}
+header{display:flex;justify-content:space-between;align-items:baseline;
+  padding:16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg)}
+h1{font-size:19px;margin:0;font-weight:600}
+.stamp{font-size:13px;color:var(--dim)}
+main{padding:16px}
+.banner{background:#4a2c2c;color:#ffd9d9;border:1px solid #7a4141;border-radius:12px;
+  padding:14px 16px;margin:16px 16px 0;font-size:18px;line-height:1.5}
+.card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px}
+.time{font-size:34px;font-weight:700;letter-spacing:-.5px}
+.time-q{color:var(--warn)}
+.title{font-size:28px;font-weight:600;margin:2px 0 16px}
+.line{display:flex;gap:10px;margin:12px 0}
+.mark{flex:0 0 1.4em;font-size:17px}
+.mark.ok{color:var(--ok)}.mark.q{color:var(--warn)}
+.time-mark{flex:0 0 auto;min-width:3.4em;font-size:18px;font-variant-numeric:tabular-nums;color:var(--dim)}
+.sub{color:var(--dim);font-size:18px;margin-top:3px}
+.sub.warn{color:var(--warn)}
+.built{color:var(--dim);font-size:15px;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
+.dest{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+a.btn{display:block;background:#22303f;color:var(--fg);text-decoration:none;
+  padding:14px;border-radius:12px;margin-top:10px;font-size:18px}
+.next{color:var(--dim);font-size:18px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.day-item{margin:0}
+.day-row{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;
+  background:none;border:0;color:inherit;font:inherit;text-align:left;
+  padding:12px 4px;margin:2px 0;border-radius:10px;cursor:pointer}
+.day-row:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+.day-row-title{flex:1}
+.chevron{flex:0 0 1.2em;font-size:20px;color:var(--dim)}
+.day-row[aria-expanded="true"] .chevron{color:var(--fg)}
+.day-panel{margin:0 0 8px}
+.day-panel .card{margin-bottom:0}
+.day-panel-enter{opacity:0;transform:translateY(-4px)}
+.day-panel-enter-active{opacity:1;transform:translateY(0);transition:opacity .18s ease,transform .18s ease}
+@media (prefers-reduced-motion:reduce){
+  .day-panel-enter,.day-panel-enter-active{opacity:1;transform:none;transition:none}
+}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:var(--dim);font-size:18px;padding:16px;font-family:inherit}
+nav button[aria-current="true"]{color:var(--fg);font-weight:600}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header><h1>캐나다 2026</h1><span class="stamp" id="stamp"></span></header>
+<div class="banner hidden" id="banner"></div>
+<main>
+  <section id="view-now"></section>
+  <section id="view-days" class="hidden"></section>
+  <section id="view-money" class="hidden"></section>
+  <!-- 폰 기본 캘린더에 넣는 경로. 파일이 app/ 안에 있어야 폰에서 열린다. -->
+  <a class="btn" id="icslink" href="./canada-2026.ics" download="canada-2026.ics">캘린더에 알람 넣기 (.ics)</a>
+</main>
+<nav>
+  <button data-view="now" aria-current="true">지금</button>
+  <button data-view="days">날짜</button>
+  <button data-view="money">돈</button>
+</nav>
+<script type="module" src="./app.js"></script>
+<script>
+// app.js가 아예 못 뜨는 경우(안내문 문법 오류 등)를 위한 마지막 방어선.
+// 모듈 안의 try/catch는 그 모듈이 파싱돼야 돌기 때문에 여기 밖에 둔다.
+setTimeout(function () {
+  var now = document.getElementById('view-now');
+  if (!now) return;                       // app.js가 이미 오류 화면을 그린 경우
+  if (window.__booted || now.childElementCount > 0) return;
+  now.innerHTML = '<div class="card"><div class="title">앱을 못 열었습니다</div>'
+    + '<div class="sub">일정 데이터를 읽다 멈췄습니다. 구글 시트를 직접 여세요 — 예약번호와 금액은 시트에 있습니다.</div>'
+    + '<div class="sub">폰을 껐다 켜고 다시 열어도 같으면 이 화면을 캡처해 두세요.</div></div>';
+  var b = document.getElementById('banner');
+  b.textContent = '앱 오류 — 시트를 보세요';
+  b.classList.remove('hidden');
+}, 4000);
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { PHOTOS_URL } from '../data/photos-config.js';
 import { createPhotoApi, PhotoApiError } from './photos-api.js';
-import { idbLocal, syncPhotos, sortNewest, b64ToBlob, removeMany, toFiles } from './photos-store.js';
+import { idbLocal, syncPhotos, sortNewest, b64ToBlob, removeMany, toFiles, dragRange, dragIntent } from './photos-store.js';
 import { resizeToJpeg } from './photos-resize.js';
 
 const PASS_KEY = 'photos-pass';
@@ -51,6 +51,7 @@ export function initPhotos(root) {
   const selected = new Set();
   let bulkArmed = false;    // 여러 장 삭제 버튼을 한 번 눌렀나
   let busy = false;         // 여러 장 지우는 중
+  let dragJustEnded = false; // 끌기 직후 따라오는 click 한 번은 무시한다
 
   // ＋ 버튼과 파일 칸은 한 번만 만든다. 사진첩에서 고르는 사이 동기화가 끝나 다시 그릴 때
   // 새로 만들면, 화면에서 떨어진 옛 칸으로 선택 결과가 가서 아무 일도 안 일어날 수 있다.
@@ -204,6 +205,55 @@ export function initPhotos(root) {
     return bar;
   }
 
+  // 끄는 동안엔 paint()로 통째로 다시 그리면 안 된다 — 손가락 아래 칸이 바뀌어 끌기가 끊긴다.
+  // 칸의 표시와 아래 막대만 제자리에서 고친다.
+  function refreshSelection(grid) {
+    for (const t of grid.querySelectorAll('.photo-tile[data-idx]')) {
+      const on = selected.has(photos[+t.dataset.idx].id);
+      t.classList.toggle('on', on);
+      t.setAttribute('aria-pressed', String(on));
+      t.querySelector('.photo-check').textContent = on ? '✓' : '';
+    }
+    root.querySelector('.photo-selbar')?.replaceWith(selectBar());
+  }
+
+  // 옆으로 끌면 지나간 칸을 한꺼번에 고른다(사진 앱과 같은 방식). 위아래로 시작하면 브라우저가 스크롤한다 —
+  // CSS touch-action: pan-y 가 세로 스크롤만 브라우저에 맡기고 가로 움직임은 여기로 보낸다.
+  function wireDrag(grid) {
+    let g = null;
+    const order = () => photos.map(p => p.id);
+    grid.addEventListener('pointerdown', e => {
+      const t = e.target.closest('.photo-tile[data-idx]');
+      if (!t) return;
+      const from = +t.dataset.idx;
+      g = { id: e.pointerId, x: e.clientX, y: e.clientY, from, last: -1, intent: null,
+        adding: !selected.has(photos[from].id), base: new Set(selected) };
+    });
+    grid.addEventListener('pointermove', e => {
+      if (!g || e.pointerId !== g.id) return;
+      if (!g.intent) {
+        g.intent = dragIntent(e.clientX - g.x, e.clientY - g.y);
+        if (g.intent === 'select') { try { grid.setPointerCapture(e.pointerId); } catch { /* 이미 끝난 포인터 */ } }
+      }
+      if (g.intent !== 'select') return;
+      e.preventDefault();
+      const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('.photo-tile[data-idx]');
+      if (!t || +t.dataset.idx === g.last) return;
+      g.last = +t.dataset.idx;
+      const next = dragRange(g.base, order(), g.from, g.last, g.adding);
+      selected.clear();
+      for (const id of next) selected.add(id);
+      bulkArmed = false;
+      refreshSelection(grid);
+    });
+    const end = () => {
+      if (g?.intent === 'select') { dragJustEnded = true; setTimeout(() => { dragJustEnded = false; }, 0); }
+      g = null;
+    };
+    grid.addEventListener('pointerup', end);
+    grid.addEventListener('pointercancel', () => { g = null; });
+  }
+
   function passForm() {
     const f = el('form', 'card');
     f.append(el('div', 'title', '사진 암호'));
@@ -228,14 +278,19 @@ export function initPhotos(root) {
     return f;
   }
 
-  function photoTile(p) {
+  function photoTile(p, idx) {
     const on = selected.has(p.id);
     const b = button(on ? 'photo-tile on' : 'photo-tile', null, () => {
-      if (selecting) { on ? selected.delete(p.id) : selected.add(p.id); bulkArmed = false; paint(); return; }
+      if (selecting) {
+        if (dragJustEnded) return;
+        selected.has(p.id) ? selected.delete(p.id) : selected.add(p.id);
+        bulkArmed = false; paint(); return;
+      }
       viewer = p.id; armed = false; paint();
     });
     b.setAttribute('aria-label', p.name);
     if (selecting) b.setAttribute('aria-pressed', String(on));
+    b.dataset.idx = idx;
     const img = el('img');
     img.src = urlFor(p);
     img.alt = '';
@@ -293,9 +348,9 @@ export function initPhotos(root) {
     if (!pending.length && !photos.length) root.append(el('div', 'sub', syncing ? '불러오는 중…' : '아직 사진이 없습니다'));
     const grid = el('div', 'photo-grid');
     for (const t of pending) grid.append(pendingTile(t));
-    for (const p of photos) grid.append(photoTile(p));
+    photos.forEach((p, i) => grid.append(photoTile(p, i)));
     root.append(grid);
-    if (selecting) { grid.classList.add('selecting'); root.append(selectBar()); }
+    if (selecting) { grid.classList.add('selecting'); root.append(selectBar()); wireDrag(grid); }
 
     const open = viewer && photos.find(p => p.id === viewer);
     if (open) root.append(viewerEl(open));

@@ -91,3 +91,18 @@ export async function removeMany(api, local, ids) {
 export function toFiles(photos) {
   return photos.map(p => new File([p.blob], p.name, { type: p.blob.type }));
 }
+
+// 끌어서 고르기. 누르기 시작한 칸(from)부터 지금 손가락이 있는 칸(to)까지를 더하거나 뺀다.
+// 매번 끌기 시작 때의 선택(base)에서 새로 계산한다 — 그래야 되돌아가면 지나쳤던 칸이 원래대로 돌아온다.
+export function dragRange(base, order, from, to, adding) {
+  const out = new Set(base);
+  const [lo, hi] = from <= to ? [from, to] : [to, from];
+  for (let i = lo; i <= hi; i++) adding ? out.add(order[i]) : out.delete(order[i]);
+  return out;
+}
+
+// 손가락이 처음 8px 움직인 방향으로 정한다. 옆이면 고르기, 위아래(대각선 포함)면 스크롤.
+export function dragIntent(dx, dy) {
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return null;
+  return Math.abs(dx) > Math.abs(dy) ? 'select' : 'scroll';
+}

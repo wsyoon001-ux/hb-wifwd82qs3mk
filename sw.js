@@ -3,7 +3,8 @@ const SHELL = [
   './', './index.html', './app.js',
   './src/sheet.js', './src/schedule.js', './src/render.js',
   './src/format.js', './src/store.js', './src/ics.js', './src/guide-schema.js',
-  './data/guide.js', './data/snapshot.js',
+  './src/photos-api.js', './src/photos-store.js', './src/photos-resize.js', './src/photos-view.js',
+  './data/guide.js', './data/snapshot.js', './data/photos-config.js',
   './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
 ];
@@ -56,6 +57,8 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   // 시트는 캐시하지 않는다. store.js가 IndexedDB로 따로 관리한다.
   if (url.hostname === 'docs.google.com') return;
+  // 사진 서버도 캐시하지 않는다. 사진은 photos-store.js가 IndexedDB로 따로 관리한다.
+  if (url.hostname === 'script.google.com' || url.hostname.endsWith('.googleusercontent.com')) return;
   if (e.request.method !== 'GET') return;
 
   const isShell = SHELL_URLS.has(url.href);

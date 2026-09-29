@@ -3,12 +3,14 @@ import { pickNow, daysUntil } from './src/schedule.js';
 import { loadRows, refreshRows } from './src/store.js';
 import { renderNow, renderDays, renderMoney } from './src/render.js';
 import { fmtDateKo, fmtTime } from './src/format.js';
+import { initPhotos } from './src/photos-view.js';
 
 const state = { rows: [], updatedAt: null, now: null, daysLeft: 0, events: EVENTS };
 const views = {
   now: document.getElementById('view-now'),
   days: document.getElementById('view-days'),
   money: document.getElementById('view-money'),
+  photos: document.getElementById('view-photos'),
 };
 
 // 개발·확인용 구멍. 콘솔에서 window.__NOW__ = new Date('2026-10-09T18:35:00Z') 처럼 넣으면
@@ -75,10 +77,15 @@ try {
   // 쏠 수 있다 — 이 모듈 안에서 아무리 일찍 리스너를 붙여도 이미 늦을 수 있어서,
   // 모듈 스크립트보다 먼저 파싱·실행되는 일반 <script>로 옮겼다.
 
+  // 사진 탭은 스스로 상태를 가진다. 실패해도 나머지 탭은 떠야 해서 따로 감싼다.
+  let photosView = null;
+  try { photosView = initPhotos(views.photos); } catch (err) { views.photos.textContent = '사진 탭을 못 열었습니다: ' + err.message; }
+
   document.querySelectorAll('nav button').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-current', String(x === b)));
       for (const [k, v] of Object.entries(views)) v.classList.toggle('hidden', k !== b.dataset.view);
+      if (b.dataset.view === 'photos') photosView?.show();
     });
   });
 

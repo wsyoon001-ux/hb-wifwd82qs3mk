@@ -1,6 +1,6 @@
 import { PHOTOS_URL } from '../data/photos-config.js';
 import { createPhotoApi, PhotoApiError } from './photos-api.js';
-import { idbLocal, syncPhotos, sortNewest, b64ToBlob } from './photos-store.js';
+import { idbLocal, syncPhotos, sortNewest, b64ToBlob, removeMany, toFiles } from './photos-store.js';
 import { resizeToJpeg } from './photos-resize.js';
 
 const PASS_KEY = 'photos-pass';
@@ -47,6 +47,10 @@ export function initPhotos(root) {
   let viewer = null;        // 전체 화면으로 연 사진 id
   let armed = false;        // 삭제 버튼을 한 번 눌렀나
   let syncing = false;
+  let selecting = false;    // 여러 장 고르기 모드
+  const selected = new Set();
+  let bulkArmed = false;    // 여러 장 삭제 버튼을 한 번 눌렀나
+  let busy = false;         // 여러 장 지우는 중
 
   // ＋ 버튼과 파일 칸은 한 번만 만든다. 사진첩에서 고르는 사이 동기화가 끝나 다시 그릴 때
   // 새로 만들면, 화면에서 떨어진 옛 칸으로 선택 결과가 가서 아무 일도 안 일어날 수 있다.
@@ -138,6 +142,68 @@ export function initPhotos(root) {
     await reload();
   }
 
+  function endSelect() {
+    selecting = false;
+    selected.clear();
+    bulkArmed = false;
+    paint();
+  }
+
+  // 공유창을 띄운다. 아이폰은 여기서 "N개 이미지 저장"을 누르면 사진 앱에 들어간다.
+  // 공유창이 없는 브라우저(PC 등)는 한 장씩 내려받는다.
+  function saveSelected() {
+    const picked = photos.filter(p => selected.has(p.id));
+    if (!picked.length) return;
+    const files = toFiles(picked);
+    if (navigator.canShare?.({ files })) {
+      navigator.share({ files }).then(endSelect).catch(e => {
+        if (e?.name !== 'AbortError') { status = '저장 창을 못 열었습니다'; paint(); }
+      });
+      return;
+    }
+    for (const p of picked) {
+      const a = el('a');
+      a.href = urlFor(p);
+      a.download = p.name;
+      document.body.append(a);
+      a.click();
+      a.remove();
+    }
+    endSelect();
+  }
+
+  async function deleteSelected() {
+    if (!navigator.onLine) { status = MSG.needNet; bulkArmed = false; paint(); return; }
+    busy = true;
+    paint();
+    try {
+      const { failed } = await removeMany(api, idbLocal, [...selected]);
+      selected.clear();
+      for (const id of failed) selected.add(id);
+      status = failed.length ? `${failed.length}장은 못 지웠습니다 — 인터넷 확인 후 다시` : '';
+      if (!failed.length) selecting = false;
+    } catch (e) {
+      onError(e, '삭제 못 했습니다 — ');
+    } finally {
+      busy = false;
+      bulkArmed = false;
+      await reload();
+    }
+  }
+
+  function selectBar() {
+    const n = selected.size;
+    const bar = el('div', 'photo-selbar');
+    if (busy) { bar.append(el('div', 'photo-selbar-msg', `${n}장 지우는 중…`)); return bar; }
+    const save = button('photo-btn', `${n}장 저장`, saveSelected);
+    const del = button('photo-btn danger', bulkArmed ? `한 번 더 누르면 ${n}장 삭제` : `${n}장 삭제`, () => {
+      if (bulkArmed) deleteSelected(); else { bulkArmed = true; paint(); }
+    });
+    save.disabled = del.disabled = n === 0;
+    bar.append(save, del, button('photo-btn', '취소', endSelect));
+    return bar;
+  }
+
   function passForm() {
     const f = el('form', 'card');
     f.append(el('div', 'title', '사진 암호'));
@@ -163,13 +229,19 @@ export function initPhotos(root) {
   }
 
   function photoTile(p) {
-    const b = button('photo-tile', null, () => { viewer = p.id; armed = false; paint(); });
+    const on = selected.has(p.id);
+    const b = button(on ? 'photo-tile on' : 'photo-tile', null, () => {
+      if (selecting) { on ? selected.delete(p.id) : selected.add(p.id); bulkArmed = false; paint(); return; }
+      viewer = p.id; armed = false; paint();
+    });
     b.setAttribute('aria-label', p.name);
+    if (selecting) b.setAttribute('aria-pressed', String(on));
     const img = el('img');
     img.src = urlFor(p);
     img.alt = '';
     img.decoding = 'async';
     b.append(img);
+    if (selecting) b.append(el('span', 'photo-check', on ? '✓' : ''));
     return b;
   }
 
@@ -208,13 +280,22 @@ export function initPhotos(root) {
     if (!pass) { root.append(passForm()); return; }
     if (status) root.append(el('div', 'photo-status', status));
 
-    root.append(add);
+    // 동기화로 사라진 사진은 선택에서도 뺀다
+    const alive = new Set(photos.map(p => p.id));
+    for (const id of selected) if (!alive.has(id)) selected.delete(id);
+
+    const top = el('div', 'photo-top');
+    top.append(add);
+    if (photos.length && !selecting) top.append(button('photo-btn photo-select', '선택', () => { selecting = true; viewer = null; paint(); }));
+    root.append(top);
+    if (selecting) root.append(el('div', 'sub', '사진을 눌러 고르세요'));
 
     if (!pending.length && !photos.length) root.append(el('div', 'sub', syncing ? '불러오는 중…' : '아직 사진이 없습니다'));
     const grid = el('div', 'photo-grid');
     for (const t of pending) grid.append(pendingTile(t));
     for (const p of photos) grid.append(photoTile(p));
     root.append(grid);
+    if (selecting) { grid.classList.add('selecting'); root.append(selectBar()); }
 
     const open = viewer && photos.find(p => p.id === viewer);
     if (open) root.append(viewerEl(open));

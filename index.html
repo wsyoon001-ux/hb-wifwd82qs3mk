@@ -78,6 +78,20 @@ nav button[aria-current="true"]{color:var(--fg);font-weight:600}
 .photo-btn.danger{background:#4a2c2c;color:#ffd9d9}
 .photo-pass{display:block;width:100%;font-family:inherit;font-size:18px;padding:12px;border-radius:10px;
   border:1px solid var(--line);background:var(--bg);color:var(--fg);margin:14px 0 10px}
+.photo-top{display:flex;gap:10px;align-items:stretch;margin-bottom:12px}
+.photo-top .photo-add{flex:1;margin-bottom:0}
+.photo-select{flex:0 0 auto;padding:10px 18px}
+.photo-tile.on img{opacity:.6}
+.photo-tile.on{outline:3px solid var(--ok);outline-offset:-3px}
+.photo-check{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;
+  border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff;font-size:17px;line-height:24px;text-align:center}
+.photo-tile.on .photo-check{background:var(--ok);border-color:var(--ok);color:#0f1720;font-weight:700}
+.photo-grid.selecting{margin-bottom:84px}
+.photo-selbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:5;
+  display:flex;gap:8px;padding:10px 16px;background:var(--card);border-top:1px solid var(--line)}
+.photo-selbar .photo-btn{font-size:16px;padding:8px 6px}
+.photo-selbar .photo-btn:disabled{opacity:.4}
+.photo-selbar-msg{flex:1;text-align:center;padding:10px;color:var(--dim)}
 .hidden{display:none}
 </style>
 </head>

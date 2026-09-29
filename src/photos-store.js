@@ -69,3 +69,25 @@ export async function syncPhotos(api, local, onChange = () => {}) {
     onChange();
   }
 }
+
+// 여러 장 지우기. 한 장씩 차례로 — Apps Script 동시 실행 한도 때문이다.
+// notfound는 상대 폰에서 이미 지운 것이라 성공으로 친다. 암호가 틀리면 나머지도 다 틀리니 바로 멈춘다.
+export async function removeMany(api, local, ids) {
+  const done = [], failed = [];
+  for (const id of ids) {
+    try {
+      await api.remove(id);
+    } catch (e) {
+      if (e?.code === 'auth') throw e;
+      if (e?.code !== 'notfound') { failed.push(id); continue; }
+    }
+    await local.del(id);
+    done.push(id);
+  }
+  return { done, failed };
+}
+
+// 공유창(사진 앱에 저장)으로 넘길 파일. 동기 함수여야 한다 — iOS는 누른 순간 안에서만 공유창을 허락한다.
+export function toFiles(photos) {
+  return photos.map(p => new File([p.blob], p.name, { type: p.blob.type }));
+}

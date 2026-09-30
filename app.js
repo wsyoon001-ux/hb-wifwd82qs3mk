@@ -4,6 +4,7 @@ import { loadRows, refreshRows } from './src/store.js';
 import { renderNow, renderDays, renderMoney } from './src/render.js';
 import { fmtDateKo, fmtTime } from './src/format.js';
 import { initPhotos } from './src/photos-view.js';
+import { initMap } from './src/map-view.js';
 
 const state = { rows: [], updatedAt: null, now: null, daysLeft: 0, events: EVENTS };
 const views = {
@@ -11,6 +12,7 @@ const views = {
   days: document.getElementById('view-days'),
   money: document.getElementById('view-money'),
   photos: document.getElementById('view-photos'),
+  map: document.getElementById('view-map'),
 };
 
 // 개발·확인용 구멍. 콘솔에서 window.__NOW__ = new Date('2026-10-09T18:35:00Z') 처럼 넣으면
@@ -81,11 +83,17 @@ try {
   let photosView = null;
   try { photosView = initPhotos(views.photos); } catch (err) { views.photos.textContent = '사진 탭을 못 열었습니다: ' + err.message; }
 
+  // 지도 탭도 스스로 상태를 가진다. 구글이 안 떠도 나머지 탭은 떠야 한다.
+  let mapView = null;
+  try { mapView = initMap(views.map); } catch (err) { views.map.textContent = '지도 탭을 못 열었습니다: ' + err.message; }
+
   document.querySelectorAll('nav button').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-current', String(x === b)));
       for (const [k, v] of Object.entries(views)) v.classList.toggle('hidden', k !== b.dataset.view);
       if (b.dataset.view === 'photos') photosView?.show();
+      if (b.dataset.view === 'map') mapView?.show();
+      else mapView?.hide();
     });
   });
 

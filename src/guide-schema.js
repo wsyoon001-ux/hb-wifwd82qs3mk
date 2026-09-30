@@ -1,5 +1,8 @@
 const TZS = new Set(['America/Vancouver', 'America/Yellowknife']);
 
+// 지도 탭(설계서 2026-09-30) — "이 장소까지 어떻게 왔나". flight은 경로를 요청하지 않는다.
+export const VIAS = new Set(['walk', 'transit', 'drive', 'flight']);
+
 // 설계서 6-1: 확신 표시는 문장마다 단다. 빈 마크는 허용하지 않는다 —
 // "추수감사절이라 휴무" 같은 사실 문장이 표시 없이 섞여 들어가는 걸 막는 유일한 방법이
 // '모든 줄에 마크'다. 순수 지시문("입국심사 → 수하물 찾기")도 확실하면 ✓를 단다.
@@ -62,6 +65,11 @@ export function validateEvents(events) {
       if (typeof e.dest.name !== 'string' || !e.dest.name) errs.push(`${at}: dest.name 없음`);
       if (typeof e.dest.address !== 'string' || !e.dest.address) errs.push(`${at}: dest.address 없음`);
       if (typeof e.dest.mapQuery !== 'string' || !e.dest.mapQuery) errs.push(`${at}: dest.mapQuery 없음`);
+      // 캐나다 범위로 막는다. 위도·경도를 뒤바꿔 넣으면 여기서 걸린다.
+      const { lat, lng } = e.dest;
+      if (typeof lat !== 'number' || !(lat >= 41 && lat <= 84)) errs.push(`${at}: dest.lat 오류 (${lat})`);
+      if (typeof lng !== 'number' || !(lng >= -142 && lng <= -52)) errs.push(`${at}: dest.lng 오류 (${lng})`);
+      if (!VIAS.has(e.dest.via)) errs.push(`${at}: dest.via는 walk|transit|drive|flight (${e.dest.via})`);
     }
     if (!Array.isArray(e.refs)) errs.push(`${at}: refs 배열 아님`);
     else e.refs.forEach((r, j) => {

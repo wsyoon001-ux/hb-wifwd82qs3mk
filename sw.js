@@ -4,7 +4,8 @@ const SHELL = [
   './src/sheet.js', './src/schedule.js', './src/render.js',
   './src/format.js', './src/store.js', './src/ics.js', './src/guide-schema.js',
   './src/photos-api.js', './src/photos-store.js', './src/photos-resize.js', './src/photos-view.js',
-  './data/guide.js', './data/snapshot.js', './data/photos-config.js',
+  './src/map-plan.js', './src/map-routes.js', './src/map-view.js',
+  './data/guide.js', './data/snapshot.js', './data/photos-config.js', './data/maps-config.js',
   './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
 ];
@@ -59,6 +60,8 @@ self.addEventListener('fetch', (e) => {
   if (url.hostname === 'docs.google.com') return;
   // 사진 서버도 캐시하지 않는다. 사진은 photos-store.js가 IndexedDB로 따로 관리한다.
   if (url.hostname === 'script.google.com' || url.hostname.endsWith('.googleusercontent.com')) return;
+  // 구글 지도는 캐시하지 않는다. 경로는 map-routes.js가 IndexedDB로 따로 관리한다.
+  if (url.hostname.endsWith('.googleapis.com') || url.hostname.endsWith('.gstatic.com')) return;
   if (e.request.method !== 'GET') return;
 
   const isShell = SHELL_URLS.has(url.href);

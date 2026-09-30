@@ -93,6 +93,11 @@ nav button[aria-current="true"]{color:var(--fg);font-weight:600}
 .photo-selbar .photo-btn{font-size:16px;padding:8px 6px}
 .photo-selbar .photo-btn:disabled{opacity:.4}
 .photo-selbar-msg{flex:1;text-align:center;padding:10px;color:var(--dim)}
+.map-day{width:100%;font:inherit;font-size:20px;padding:12px;margin-bottom:12px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:12px}
+.map-box{height:calc(100vh - 240px);min-height:320px;border-radius:12px;overflow:hidden}
+.gm-style .map-pin{color:#111;font-size:16px}
+.map-pin-name{font-weight:600;margin-bottom:4px}
+.me-dot{width:16px;height:16px;border-radius:50%;background:#4b8bf5;border:3px solid #fff;box-shadow:0 0 0 2px rgba(75,139,245,.35)}
 .hidden{display:none}
 </style>
 </head>
@@ -105,12 +110,14 @@ nav button[aria-current="true"]{color:var(--fg);font-weight:600}
   <section id="view-days" class="hidden"></section>
   <section id="view-money" class="hidden"></section>
   <section id="view-photos" class="hidden"></section>
+  <section id="view-map" class="hidden"></section>
   <!-- 폰 기본 캘린더에 넣는 경로. 파일이 app/ 안에 있어야 폰에서 열린다. -->
   <a class="btn" id="icslink" href="./canada-2026.ics" download="canada-2026.ics">캘린더에 알람 넣기 (.ics)</a>
 </main>
 <nav>
   <button data-view="now" aria-current="true">지금</button>
   <button data-view="days">날짜</button>
+  <button data-view="map">지도</button>
   <button data-view="money">돈</button>
   <button data-view="photos">사진</button>
 </nav>

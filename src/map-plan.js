@@ -56,3 +56,58 @@ export function daySegments(pins) {
   }
   return segs;
 }
+
+// 그날 경로를 구글 지도에서 한 번에 연다. 규칙:
+// - 핀 순서(시각순) 그대로 잇는다. 같은 자리 연속 일정은 dayPins가 이미 하나로 합쳤다.
+// - 비행기 구간에서 끊는다. 밴쿠버→옐로나이프를 한 경로로 넣으면 구글이 수천 km 운전길을 그린다.
+//   끊긴 조각마다 링크 하나. 핀이 하나뿐인 조각은 버린다 — 핀 말풍선의 길찾기로 충분하다.
+// - 폰 구글 지도 앱은 경유지 9곳까지다. 넘으면 끝점을 이어받아 링크를 나눈다.
+//   (모바일 브라우저로 열리면 3곳까지만 받는다는 안내도 있다 — 앱이 깔려 있으면 앱으로 열린다.)
+// - 좌표로 넘긴다. mapQuery는 구글이 엉뚱한 곳으로 찾을 수 있어 핀과 어긋난다.
+// - 수단: 구간 수단이 모두 같으면 그 수단, 섞이면 비워서 구글 기본값에 맡긴다.
+//   대중교통은 경유지를 못 받으므로 두 점짜리일 때만 transit을 넣는다.
+export const MAX_WAYPOINTS = 9;
+const MODE = { walk: 'walking', transit: 'transit', drive: 'driving' };
+const CITY = { 'America/Vancouver': '밴쿠버', 'America/Yellowknife': '옐로나이프' };
+const ll = p => `${p.lat},${p.lng}`;
+
+export function routeUrl(points) {
+  const legs = [...new Set(points.slice(1).map(p => p.via))];
+  let mode = legs.length === 1 ? MODE[legs[0]] : undefined;
+  if (mode === 'transit' && points.length > 2) mode = undefined;
+  const q = [
+    'api=1',
+    'origin=' + encodeURIComponent(ll(points[0])),
+    'destination=' + encodeURIComponent(ll(points[points.length - 1])),
+  ];
+  if (points.length > 2) q.push('waypoints=' + encodeURIComponent(points.slice(1, -1).map(ll).join('|')));
+  if (mode) q.push('travelmode=' + mode);
+  return 'https://www.google.com/maps/dir/?' + q.join('&');
+}
+
+export function dayRouteLinks(pins, max = MAX_WAYPOINTS) {
+  const groups = [];
+  for (const p of pins) {
+    if (!groups.length || p.via === 'flight') groups.push([]);
+    groups[groups.length - 1].push(p);
+  }
+  const chunks = [];
+  for (const g of groups) {
+    for (let i = 0; i < g.length - 1;) {
+      const end = Math.min(i + max + 1, g.length - 1);
+      chunks.push(g.slice(i, end + 1));
+      i = end;
+    }
+  }
+  const cities = new Set(chunks.map(c => c[0].events[0].tz));
+  return chunks.map(c => {
+    const tags = [];
+    if (cities.size > 1) tags.push(CITY[c[0].events[0].tz] ?? '');
+    if (chunks.length > cities.size) tags.push(`${c[0].n}→${c[c.length - 1].n}번`);
+    const tail = tags.filter(Boolean).join(' ');
+    return {
+      label: '이 날 경로 구글 지도로 열기' + (tail ? ` · ${tail}` : ''),
+      url: routeUrl(c), from: c[0].n, to: c[c.length - 1].n,
+    };
+  });
+}

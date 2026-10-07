@@ -1,44 +1,10 @@
-// 사진 서버(Apps Script) 호출. 모든 실패를 PhotoApiError(code)로 바꾼다 —
-// 화면은 code만 보고 무엇을 띄울지 정한다.
-//   서버가 준 code: auth · notfound · toolarge · bad · nosetup
-//   여기서 붙이는 code: offline(연결 안 됨·응답 없음) · server(이상한 응답) · noconfig(주소 없음)
-export class PhotoApiError extends Error {
-  constructor(code) {
-    super(code);
-    this.name = 'PhotoApiError';
-    this.code = code;
-  }
-}
+// 사진 서버(Apps Script) 호출. 호출·오류 처리는 gas-api.js가 한다.
+import { ApiError, createGasCall } from './gas-api.js';
 
-export function createPhotoApi({ url, getPass, fetchImpl = (...a) => fetch(...a), timeoutMs = 30000 }) {
-  async function call(action, extra = {}) {
-    if (!url) throw new PhotoApiError('noconfig');
-    // Apps Script는 가끔 한참 멈춘다(콜드 스타트). 끝없이 기다리면 화면이 "올리는 중"에 갇힌다.
-    const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), timeoutMs);
-    try {
-      let res;
-      try {
-        res = await fetchImpl(url, {
-          method: 'POST',
-          // text/plain이어야 브라우저가 사전 확인(OPTIONS) 요청을 안 보낸다 — Apps Script는 그걸 못 받는다.
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ ...extra, action, pass: getPass() ?? '' }),
-          signal: ac.signal,
-        });
-      } catch {
-        throw new PhotoApiError('offline');
-      }
-      if (!res.ok) throw new PhotoApiError('server');
-      let body;
-      try { body = await res.json(); } catch { throw new PhotoApiError('server'); }
-      if (!body || body.ok !== true) throw new PhotoApiError(typeof body?.error === 'string' ? body.error : 'server');
-      return body;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
+export { ApiError as PhotoApiError };
 
+export function createPhotoApi(opts) {
+  const call = createGasCall(opts);
   return {
     list: async () => (await call('list')).photos,
     get: async id => { const b = await call('get', { id }); return { mime: b.mime, data: b.data }; },

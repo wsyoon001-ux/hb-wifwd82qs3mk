@@ -1,6 +1,7 @@
 import { fmtTime, fmtDateKo, fmtCad, fmtKrw } from './format.js';
 import { localDateKey } from './schedule.js';
 import { sumBy } from './sheet.js';
+import { tripDays } from './map-plan.js';
 import { BEFORE_TRIP_LINE, GUIDE_BUILT } from '../data/guide.js';
 
 const el = (t, c, txt) => {
@@ -29,7 +30,7 @@ function builtTag() {
 
 // header=false는 날짜 탭 아코디언에서 쓴다 — 행 버튼에 이미 시각·제목이 있어서
 // 카드 안에 또 찍으면 같은 줄이 두 번 보인다. 그 외 내용(마크·목적지·연락처)은 그대로다.
-function card(e, { header = true } = {}) {
+function card(e, { header = true, onEdit = null } = {}) {
   const c = el('div', 'card');
   if (header) {
     const t = el('div', 'time');
@@ -62,7 +63,14 @@ function card(e, { header = true } = {}) {
       c.append(el('div', 'sub', `${r.label}  ${r.value}`));
     }
   }
-  c.append(builtTag());
+  // 직접 고친 일정은 "안내문 몇 월 며칠 판"이 아니다. 누가 쓴 건지 구분되게 한다.
+  c.append(e.edited ? el('div', 'built', '직접 수정한 일정') : builtTag());
+  if (onEdit) {
+    const b = el('button', 'btn-edit', '수정');
+    b.type = 'button';
+    b.addEventListener('click', () => onEdit(e));
+    c.append(b);
+  }
   return c;
 }
 
@@ -119,7 +127,7 @@ export function renderNow(root, state) {
 // 다시 그릴 때마다 이 목록을 보고 열림/닫힘을 복원한다.
 const openDayIds = new Set();
 
-function dayRow(e) {
+function dayRow(e, actions) {
   const wrap = el('div', 'day-item');
   const panelId = `day-panel-${e.id}`;
   const isOpen = openDayIds.has(e.id);
@@ -132,23 +140,25 @@ function dayRow(e) {
 
   const chevron = el('span', 'chevron', isOpen ? '▾' : '▸');
   chevron.setAttribute('aria-hidden', 'true');
+  const titleSpan = el('span', 'day-row-title', e.title);
+  if (e.edited) titleSpan.append(el('span', 'edited-tag', '수정됨'));
   btn.append(
     chevron,
     el('span', 'time-mark', fmtTime(e.startUtc, e.tz) + (e.timeMark === '?' ? ' ?' : '')),
-    el('span', 'day-row-title', e.title),
+    titleSpan,
   );
 
   const panel = el('div', 'day-panel');
   panel.id = panelId;
   panel.hidden = !isOpen;
-  if (isOpen) panel.append(card(e, { header: false }));
+  if (isOpen) panel.append(card(e, { header: false, onEdit: actions?.onEdit }));
 
   btn.addEventListener('click', () => {
     const willOpen = !openDayIds.has(e.id);
     if (willOpen) {
       openDayIds.add(e.id);
       panel.hidden = false;
-      panel.replaceChildren(card(e, { header: false }));
+      panel.replaceChildren(card(e, { header: false, onEdit: actions?.onEdit }));
       // 펼칠 때만 살짝 보여준다. prefers-reduced-motion이면 CSS에서 이 클래스 효과를 꺼 둔다.
       panel.classList.add('day-panel-enter');
       requestAnimationFrame(() => panel.classList.add('day-panel-enter-active'));
@@ -169,20 +179,87 @@ function dayRow(e) {
   return wrap;
 }
 
+// 지운 일정 목록이 펼쳐져 있는지. openDayIds와 같은 이유로 모듈 전역에 둔다.
+let deletedOpen = false;
+
+// 암호 칸에 치던 글자. 날짜 탭은 1분마다 다시 그려지므로 DOM이 아니라 여기 둔다.
+let passDraft = '';
+
+function passCard(onPass, tried) {
+  const f = el('form', 'card');
+  f.append(el('div', 'title', '일정 암호'));
+  f.append(el('div', 'sub warn', tried
+    ? '암호가 틀렸습니다. 다시 넣어 주세요.'
+    : '암호가 없거나 틀려서 수정한 일정을 못 올렸습니다. 사진 탭과 같은 공용 암호를 넣으세요.'));
+  const i = el('input', 'photo-pass');
+  i.value = passDraft;
+  i.addEventListener('input', () => { passDraft = i.value; });
+  i.type = 'password';
+  i.autocomplete = 'current-password';
+  i.setAttribute('aria-label', '일정 암호');
+  const b = el('button', 'photo-btn', '확인');
+  b.type = 'submit';
+  f.append(i, b);
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const v = i.value.trim();
+    if (!v) return;
+    passDraft = '';
+    onPass(v);
+  });
+  return f;
+}
+
 export function renderDays(root, state) {
   root.replaceChildren();
+  const actions = state.actions ?? null;
+  if (state.planNotice) {
+    const n = el('div', 'card');
+    n.append(el('div', 'sub warn', state.planNotice));
+    root.append(n);
+  }
+  if (state.planAuth && actions) root.append(passCard(actions.onPass, state.passTried));
+
   const byDay = new Map();
   for (const e of state.events) {
     const k = localDateKey(e.startUtc, e.tz);
     if (!byDay.has(k)) byDay.set(k, []);
     byDay.get(k).push(e);
   }
-  for (const [, list] of [...byDay].sort((a, b) => a[0] < b[0] ? -1 : 1)) {
+  // 일정을 다 지운 날도 보여야 거기에 새로 넣을 수 있다.
+  const days = [...new Set([...tripDays(), ...byDay.keys()])].sort();
+  for (const day of days) {
+    const list = byDay.get(day) ?? [];
     const c = el('div', 'card');
     const head = list[0];
-    c.append(el('div', 'title', `${fmtDateKo(head.startUtc, head.tz)} · ${head.place}`));
-    for (const e of list) c.append(dayRow(e));
+    c.append(el('div', 'title', head ? `${fmtDateKo(head.startUtc, head.tz)} · ${head.place}` : fmtDateKo(`${day}T12:00:00Z`, 'UTC')));
+    if (!list.length) c.append(el('div', 'sub', '일정 없음'));
+    for (const e of list) c.append(dayRow(e, actions));
+    if (actions) {
+      const add = el('button', 'btn-add', '+ 일정 추가');
+      add.type = 'button';
+      add.addEventListener('click', () => actions.onAdd(day));
+      c.append(add);
+    }
     root.append(c);
+  }
+
+  const deleted = state.deleted ?? [];
+  if (deleted.length && actions) {
+    const d = el('details', 'card deleted');
+    d.open = deletedOpen;
+    d.addEventListener('toggle', () => { deletedOpen = d.open; });
+    d.append(el('summary', null, `지운 일정 ${deleted.length}건`));
+    for (const e of deleted) {
+      const row = el('div', 'line');
+      row.append(el('div', null, `${fmtDateKo(e.startUtc, e.tz)} ${fmtTime(e.startUtc, e.tz)}  ${e.title}`));
+      const b = el('button', 'photo-btn', '되살리기');
+      b.type = 'button';
+      b.addEventListener('click', () => actions.onRestore(e));
+      row.append(b);
+      d.append(row);
+    }
+    root.append(d);
   }
 }
 

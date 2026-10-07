@@ -5,6 +5,8 @@ const SHELL = [
   './src/format.js', './src/store.js', './src/ics.js', './src/guide-schema.js',
   './src/photos-api.js', './src/photos-store.js', './src/photos-resize.js', './src/photos-view.js',
   './src/map-plan.js', './src/map-routes.js', './src/map-view.js',
+  './src/maps-loader.js', './src/gas-api.js',
+  './src/plan-merge.js', './src/plan-form.js', './src/plan-api.js', './src/plan-store.js', './src/plan-edit-view.js',
   './data/guide.js', './data/snapshot.js', './data/photos-config.js', './data/maps-config.js',
   './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',

@@ -1,36 +1,17 @@
 import { EVENTS } from '../data/guide.js';
 import { MAPS_KEY } from '../data/maps-config.js';
-import { tripDays, defaultDay, dayPins, daySegments } from './map-plan.js';
+import { tripDays, defaultDay, dayPins, daySegments, dayRouteLinks } from './map-plan.js';
 import { resolveRoute, idbRoutes } from './map-routes.js';
 import { fmtDateKo, fmtTime } from './format.js';
+import { loadMaps } from './maps-loader.js';
 
 const TRAVEL = { walk: 'WALKING', transit: 'TRANSIT', drive: 'DRIVING' };
-const LOAD_TIMEOUT_MS = 15000;
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
   if (text != null) e.textContent = text;
   return e;
-}
-
-// 스크립트는 탭을 처음 열 때만 붙인다. 지도를 안 보는 날까지 구글에 요청할 이유가 없다.
-// 시간 초과로 포기해도 스크립트는 남겨 둔다 — 다시 시도할 때 두 번 붙이면 구글이 경고하고 오작동한다.
-// 받기 자체가 실패(onerror)한 경우에만 떼어 내서 다음 시도가 새로 붙이게 한다.
-let script = null;
-function loadMaps(key) {
-  if (window.google?.maps?.importLibrary) return Promise.resolve();
-  if (!key) return Promise.reject(new Error('키 없음'));
-  return new Promise((res, rej) => {
-    const t = setTimeout(() => rej(new Error('시간 초과')), LOAD_TIMEOUT_MS);
-    window.__mapsReady = () => { clearTimeout(t); res(); };
-    if (script) return;
-    script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&callback=__mapsReady`;
-    script.async = true;
-    script.onerror = () => { clearTimeout(t); script.remove(); script = null; rej(new Error('스크립트 못 받음')); };
-    document.head.append(script);
-  });
 }
 
 async function fetchRoute(from, to, via) {
@@ -67,9 +48,20 @@ export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new
     select.append(o);
   }
   select.value = defaultDay(now());
+  // 그날 경로 링크. 지도가 안 떠도(키 없음·오프라인 목록) 쓸 수 있게 지도와 따로 그린다.
+  const routeBox = el('div', 'map-route');
   const box = el('div', 'map-box');
   const fallback = el('div', 'hidden');
-  root.append(select, box, fallback);
+  root.append(select, routeBox, box, fallback);
+
+  function paintRoute() {
+    routeBox.replaceChildren(...dayRouteLinks(dayPins(events, select.value)).map(l => {
+      const a = el('a', 'btn', l.label);
+      a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
+      return a;
+    }));
+  }
+  paintRoute();
 
   let map = null, info = null, libs = null, me = null, watchId = null;
   let failed = false, authFailed = false, started = false, drawn = [], token = 0;
@@ -168,7 +160,7 @@ export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new
 
   // 키가 틀렸거나 사이트 제한에 걸리면 구글이 이 전역 함수를 부른다. 회색 오류 지도 대신 목록.
   window.gm_authFailure = () => { authFailed = true; showFallback(); };
-  select.addEventListener('change', draw);
+  select.addEventListener('change', () => { paintRoute(); draw(); });
 
   return {
     show() {
@@ -179,6 +171,13 @@ export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new
       box.classList.remove('hidden');
       fallback.classList.add('hidden');
       start();
+    },
+    // 일정이 바뀌면(수정·동기화) 지금 날짜를 다시 그린다. 같은 목록이면 경로를 또 요청하지 않는다.
+    setEvents(next) {
+      if (next === events) return;
+      events = next;
+      paintRoute();
+      if (started) draw();
     },
     hide() {
       if (watchId == null) return;

@@ -1,12 +1,73 @@
 import { EVENTS, GUIDE_BUILT } from './data/guide.js';
 import { pickNow, daysUntil } from './src/schedule.js';
-import { loadRows, refreshRows } from './src/store.js';
+import { loadRows, refreshRows, kv } from './src/store.js';
 import { renderNow, renderDays, renderMoney } from './src/render.js';
 import { fmtDateKo, fmtTime } from './src/format.js';
 import { initPhotos } from './src/photos-view.js';
 import { initMap } from './src/map-view.js';
+import { PHOTOS_URL } from './data/photos-config.js';
+import { mergePlan } from './src/plan-merge.js';
+import { createPlanApi } from './src/plan-api.js';
+import { createPlanSync } from './src/plan-store.js';
+import { restoreRecord } from './src/plan-form.js';
+import { openEditor } from './src/plan-edit-view.js';
 
-const state = { rows: [], updatedAt: null, now: null, daysLeft: 0, events: EVENTS };
+const state = { rows: [], updatedAt: null, now: null, daysLeft: 0, events: EVENTS, deleted: [], planNotice: '', planAuth: false };
+let mapView = null;
+const baseById = new Map(EVENTS.map(e => [e.id, e]));
+
+// 사진 탭과 같은 서버·암호. 암호는 사진 탭이 바꿀 수 있으므로 부를 때마다 읽는다.
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* 이번 실행 동안만 */ } }
+let passOverride = null;
+const plan = createPlanSync({
+  api: createPlanApi({ url: lsGet('photos-url') || PHOTOS_URL, getPass: () => passOverride ?? lsGet('photos-pass') }),
+  kv,
+  onChange: () => { refreshEvents(); paint(); },
+});
+
+const PLAN_MSG = {
+  bad: '일정 서버 업데이트가 필요합니다 — 수정한 일정은 이 폰에만 있습니다',
+  server: '일정 서버 응답이 이상합니다 — 수정한 일정은 이 폰에 저장돼 있습니다',
+  toolarge: '수정 내용이 너무 많아 서버가 거절했습니다',
+  noconfig: '일정 서버가 연결되지 않았습니다 — 수정한 일정은 이 폰에만 있습니다',
+};
+
+// 합친 결과가 같으면 배열을 바꾸지 않는다 — 지도가 같은 경로를 다시 요청하지 않게.
+function refreshEvents() {
+  const m = mergePlan(EVENTS, plan.records());
+  if (JSON.stringify(m.events) !== JSON.stringify(state.events)) state.events = m.events;
+  state.deleted = m.deleted;
+  const err = plan.lastError();
+  state.planAuth = err === 'auth';
+  // 새로 넣은 암호는 서버가 받아준 뒤에야 저장한다. 오타가 사진 탭 암호까지 덮으면 안 된다.
+  if (!err && passOverride) { lsSet('photos-pass', passOverride); passOverride = null; state.passTried = false; }
+  state.planNotice = PLAN_MSG[err] ?? '';
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 6000);
+}
+
+function onSave(record, { timeChanged } = {}) {
+  plan.save(record);
+  // 캘린더(.ics)는 한 번 넣으면 앱이 못 고친다.
+  if (timeChanged) toast('저장했습니다. 폰 캘린더 알람은 따로 고치세요');
+}
+
+state.actions = {
+  onEdit: e => openEditor({ event: e, base: baseById.get(e.id) ?? null, dayKey: null, events: state.events, onSave }),
+  onAdd: day => openEditor({ event: null, base: null, dayKey: day, events: state.events, onSave }),
+  onRestore: e => onSave(restoreRecord(e, baseById.has(e.id))),
+  // 이미 돌던 동기화가 옛 암호로 실패하고 끝날 수 있어, 끝난 뒤 새 암호로 한 번 더 돈다.
+  onPass: v => { passOverride = v; state.passTried = true; plan.sync().then(() => plan.sync()); },
+};
 const views = {
   now: document.getElementById('view-now'),
   days: document.getElementById('view-days'),
@@ -30,16 +91,18 @@ function banner(msg) {
 
 function recompute() {
   const t = nowUtc();
-  state.now = pickNow(EVENTS, t);
-  state.daysLeft = EVENTS.length ? daysUntil(t, EVENTS[0].startUtc) : 0;
+  state.now = pickNow(state.events, t);
+  state.daysLeft = state.events.length ? daysUntil(t, state.events[0].startUtc) : 0;
 }
 
 function paintStamp() {
   const s = document.getElementById('stamp');
   // '시트'라고 못 박는다. 이 시각은 시트에서 읽은 금액·날짜에만 해당하고,
   // 카드의 요금·전화번호·픽업 장소는 안내문(빌드 시점 고정)에서 온다.
-  if (!state.updatedAt) { s.textContent = ''; return; }
-  s.textContent = `시트 갱신 ${fmtDateKo(state.updatedAt, 'America/Vancouver')} ${fmtTime(state.updatedAt, 'America/Vancouver')}`;
+  if (!state.updatedAt) s.textContent = '';
+  else s.textContent = `시트 갱신 ${fmtDateKo(state.updatedAt, 'America/Vancouver')} ${fmtTime(state.updatedAt, 'America/Vancouver')}`;
+  const n = plan.pendingCount();
+  if (n) s.textContent += ` · 올리지 못한 수정 ${n}건`;
 }
 
 function paint() {
@@ -48,6 +111,7 @@ function paint() {
   renderDays(views.days, state);
   renderMoney(views.money, state);
   paintStamp();
+  mapView?.setEvents(state.events);
 }
 window.__repaint = paint;
 
@@ -79,13 +143,16 @@ try {
   // 쏠 수 있다 — 이 모듈 안에서 아무리 일찍 리스너를 붙여도 이미 늦을 수 있어서,
   // 모듈 스크립트보다 먼저 파싱·실행되는 일반 <script>로 옮겼다.
 
+  // 폰에 저장된 수정분부터 입힌다. 네트워크는 기다리지 않는다.
+  await plan.load();
+  refreshEvents();
+
   // 사진 탭은 스스로 상태를 가진다. 실패해도 나머지 탭은 떠야 해서 따로 감싼다.
   let photosView = null;
   try { photosView = initPhotos(views.photos); } catch (err) { views.photos.textContent = '사진 탭을 못 열었습니다: ' + err.message; }
 
   // 지도 탭도 스스로 상태를 가진다. 구글이 안 떠도 나머지 탭은 떠야 한다.
-  let mapView = null;
-  try { mapView = initMap(views.map); } catch (err) { views.map.textContent = '지도 탭을 못 열었습니다: ' + err.message; }
+  try { mapView = initMap(views.map, { events: state.events }); } catch (err) { views.map.textContent = '지도 탭을 못 열었습니다: ' + err.message; }
 
   document.querySelectorAll('nav button').forEach(b => {
     b.addEventListener('click', () => {
@@ -110,6 +177,10 @@ try {
   paint();
   window.__booted = true;   // index.html의 감시 타이머에게 "떴다"고 알린다
 
+  // 수정 기록은 뒤에서 서버와 맞춘다. 못 올린 것은 연결될 때·앱 복귀·1분마다 다시 올린다.
+  plan.sync();
+  window.addEventListener('online', () => plan.sync());
+
   // 2) 그 다음에 조용히 갱신한다. 조용히 실패하면 안 되는 경우가 하나 있다:
   //    시트를 읽었는데 모양이 이상해서 거부한 경우. 화면 숫자가 옛날 것이라는 걸 말해야 한다.
   refreshRows().then(r => {
@@ -120,8 +191,8 @@ try {
   });
 
   // 3) 1분마다 '지금'을 다시 계산
-  setInterval(paint, 60000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) paint(); });
+  setInterval(() => { paint(); if (plan.pendingCount()) plan.sync(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { paint(); plan.sync(); } });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })

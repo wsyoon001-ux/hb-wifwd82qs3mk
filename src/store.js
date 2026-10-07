@@ -109,3 +109,6 @@ export async function refreshRows() {
     return { ok: false, reason: e.message };
   }
 }
+
+// 일정 변경 기록(plan-store.js)도 같은 저장소를 쓴다.
+export const kv = { get: idbGet, set: idbSet };

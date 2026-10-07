@@ -43,6 +43,30 @@ export function dayPins(events, dayKey) {
   return pins;
 }
 
+// 숙소는 모든 이동의 거점이다. 그날 핀 앞뒤로 숙소를 붙이고 숙소 핀은 번호 대신 🏠로 표시한다.
+// - 아침: 전날 밤 묵은 숙소(checkIn < 오늘 <= checkOut)에서 출발. 첫 핀이 이미 그 숙소면 그대로.
+// - 밤: 오늘 밤 묵을 숙소(checkIn <= 오늘 < checkOut)로 돌아온다. 마지막 핀이 이미 그 숙소면 그대로.
+//   돌아오는 길은 걸어서로 둔다 — 시내 숙소라 대개 맞고, 아니어도 구글이 길을 바꿔 준다.
+// - 같은 좌표의 일정 핀(체크인·체크아웃)도 숙소로 표시한다. 번호는 숙소를 뺀 핀에만 다시 매긴다.
+export const LODGING_MARK = '🏠';
+const same = (a, b) => a && b && a.lat === b.lat && a.lng === b.lng;
+
+export function withLodging(pins, dayKey, lodgings = []) {
+  const morning = lodgings.find(l => l.checkIn < dayKey && dayKey <= l.checkOut);
+  const night = lodgings.find(l => l.checkIn <= dayKey && dayKey < l.checkOut);
+  // 붙인 숙소 핀은 일정이 없어서 시간대를 옆 핀에서 빌린다(도시 이름 표시에 쓴다).
+  const stay = (l, via, label, nb) => ({
+    name: l.name, mapQuery: l.mapQuery, lat: l.lat, lng: l.lng, via,
+    events: [], note: label, lodging: true, tz: nb.events[0]?.tz ?? nb.tz,
+  });
+  const out = pins.map(p => ({ ...p, lodging: lodgings.some(l => same(l, p)) }));
+  if (out.length && morning && !same(morning, out[0])) out.unshift(stay(morning, undefined, '아침 출발 · 숙소', out[0]));
+  if (out.length && night && !same(night, out[out.length - 1])) out.push(stay(night, 'walk', '밤 · 숙소로 돌아오기', out[out.length - 1]));
+  let n = 0;
+  for (const p of out) p.n = p.lodging ? LODGING_MARK : ++n;
+  return out;
+}
+
 export function routeKey(a, b, via) {
   return `${a.lat},${a.lng}|${b.lat},${b.lng}|${via}`;
 }
@@ -99,10 +123,11 @@ export function dayRouteLinks(pins, max = MAX_WAYPOINTS) {
       i = end;
     }
   }
-  const cities = new Set(chunks.map(c => c[0].events[0].tz));
+  const tzOf = p => p.events[0]?.tz ?? p.tz;
+  const cities = new Set(chunks.map(c => tzOf(c[0])));
   return chunks.map(c => {
     const tags = [];
-    if (cities.size > 1) tags.push(CITY[c[0].events[0].tz] ?? '');
+    if (cities.size > 1) tags.push(CITY[tzOf(c[0])] ?? '');
     if (chunks.length > cities.size) tags.push(`${c[0].n}→${c[c.length - 1].n}번`);
     const tail = tags.filter(Boolean).join(' ');
     return {

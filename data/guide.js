@@ -875,3 +875,14 @@ export const EVENTS = [
     refs: [{ label: '편명', value: 'AC063' }],
   },
 ];
+
+// 숙소. 지도 탭은 이걸로 그날 아침 출발점·밤 도착점을 채우고 숙소 핀을 따로 표시한다.
+// 좌표는 위 일정의 dest와 똑같아야 같은 자리로 알아본다. checkOut 날 아침은 이 숙소에서 나선다.
+export const LODGINGS = [
+  { name: 'Century Plaza Hotel', mapQuery: 'Century Plaza Hotel 1015 Burrard St Vancouver',
+    lat: 49.28083, lng: -123.12705, checkIn: '2026-10-09', checkOut: '2026-10-12' },
+  { name: 'Airbnb — Cozy Frame Lake Suite', mapQuery: '4811 Matonabee St Yellowknife',
+    lat: 62.45331, lng: -114.38261, checkIn: '2026-10-12', checkOut: '2026-10-15' },
+  { name: 'Radisson Blu Vancouver Airport', mapQuery: 'Radisson Blu Vancouver Airport 3500 Cessna Dr Richmond',
+    lat: 49.19095, lng: -123.14055, checkIn: '2026-10-15', checkOut: '2026-10-16' },
+];

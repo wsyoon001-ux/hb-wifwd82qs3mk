@@ -1,6 +1,6 @@
-import { EVENTS } from '../data/guide.js';
+import { EVENTS, LODGINGS } from '../data/guide.js';
 import { MAPS_KEY } from '../data/maps-config.js';
-import { tripDays, defaultDay, dayPins, daySegments, dayRouteLinks } from './map-plan.js';
+import { tripDays, defaultDay, dayPins, withLodging, daySegments, dayRouteLinks } from './map-plan.js';
 import { resolveRoute, idbRoutes } from './map-routes.js';
 import { fmtDateKo, fmtTime } from './format.js';
 import { loadMaps } from './maps-loader.js';
@@ -32,7 +32,8 @@ function directionsUrl(pin) {
 // 핀 말풍선과 오프라인 목록이 같은 내용을 쓴다.
 function pinBody(pin) {
   const box = el('div', 'map-pin');
-  box.append(el('div', 'map-pin-name', `${pin.n}. ${pin.name}`));
+  box.append(el('div', 'map-pin-name', pin.lodging ? `${pin.n} ${pin.name} · 숙소` : `${pin.n}. ${pin.name}`));
+  if (pin.note) box.append(el('div', 'sub', pin.note));
   for (const ev of pin.events) box.append(el('div', 'sub', `${fmtTime(ev.startUtc, ev.tz)}  ${ev.title}`));
   const a = el('a', 'btn', '구글 지도로 길찾기');
   a.href = directionsUrl(pin); a.target = '_blank'; a.rel = 'noopener';
@@ -40,7 +41,8 @@ function pinBody(pin) {
   return box;
 }
 
-export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new Date() } = {}) {
+export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new Date(), lodgings = LODGINGS } = {}) {
+  const pinsOf = day => withLodging(dayPins(events, day), day, lodgings);
   const select = el('select', 'map-day');
   for (const d of tripDays()) {
     const o = el('option', null, fmtDateKo(`${d}T12:00:00Z`, 'UTC'));
@@ -55,7 +57,7 @@ export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new
   root.append(select, routeBox, box, fallback);
 
   function paintRoute() {
-    routeBox.replaceChildren(...dayRouteLinks(dayPins(events, select.value)).map(l => {
+    routeBox.replaceChildren(...dayRouteLinks(pinsOf(select.value)).map(l => {
       const a = el('a', 'btn', l.label);
       a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
       return a;
@@ -71,7 +73,7 @@ export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new
     box.classList.add('hidden');
     fallback.classList.remove('hidden');
     fallback.replaceChildren(el('div', 'sub', '지도를 불러오지 못했습니다'));
-    for (const pin of dayPins(events, select.value)) {
+    for (const pin of pinsOf(select.value)) {
       const c = el('div', 'card');
       c.append(pinBody(pin));
       fallback.append(c);
@@ -105,11 +107,17 @@ export function initMap(root, { events = EVENTS, key = MAPS_KEY, now = () => new
     const my = ++token;
     clear();
     info.close();
-    const pins = dayPins(events, select.value);
+    const pins = pinsOf(select.value);
     const bounds = new google.maps.LatLngBounds();
     for (const pin of pins) {
-      const glyph = new libs.PinElement({ glyphText: String(pin.n), background: '#e8b84b', borderColor: '#0f1720', glyphColor: '#0f1720' });
-      const m = new libs.AdvancedMarkerElement({ map, position: { lat: pin.lat, lng: pin.lng }, content: glyph, title: pin.name });
+      // 숙소는 파란 큰 핀으로 일정 핀(노란 번호)과 구별한다.
+      const glyph = pin.lodging
+        ? new libs.PinElement({ glyphText: String(pin.n), background: '#4b8bf5', borderColor: '#ffffff', scale: 1.3 })
+        : new libs.PinElement({ glyphText: String(pin.n), background: '#e8b84b', borderColor: '#0f1720', glyphColor: '#0f1720' });
+      const m = new libs.AdvancedMarkerElement({
+        map, position: { lat: pin.lat, lng: pin.lng }, content: glyph,
+        title: pin.lodging ? `숙소 · ${pin.name}` : pin.name, zIndex: pin.lodging ? 500 : undefined,
+      });
       m.addEventListener('gmp-click', () => { info.setContent(pinBody(pin)); info.open({ map, anchor: m }); });
       drawn.push(m);
       bounds.extend({ lat: pin.lat, lng: pin.lng });

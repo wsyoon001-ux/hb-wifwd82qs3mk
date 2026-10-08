@@ -11,6 +11,7 @@ import { createPlanApi } from './src/plan-api.js';
 import { createPlanSync } from './src/plan-store.js';
 import { restoreRecord } from './src/plan-form.js';
 import { openEditor } from './src/plan-edit-view.js';
+import { initEmergency } from './src/emergency-view.js';
 
 const state = { rows: [], updatedAt: null, now: null, daysLeft: 0, events: EVENTS, deleted: [], planNotice: '', planAuth: false };
 let mapView = null;
@@ -142,6 +143,9 @@ try {
   // 이미 시작되고, 그 fetch는 이 파일의 본문이 실행되기도 전에 끝나 postMessage를
   // 쏠 수 있다 — 이 모듈 안에서 아무리 일찍 리스너를 붙여도 이미 늦을 수 있어서,
   // 모듈 스크립트보다 먼저 파싱·실행되는 일반 <script>로 옮겼다.
+
+  // 비상 정보는 무엇보다 먼저 붙인다. 아래가 실패해 오류 화면이 떠도 헤더 버튼은 산다.
+  try { initEmergency(document.getElementById('em-open')); } catch { /* 나머지는 떠야 한다 */ }
 
   // 폰에 저장된 수정분부터 입힌다. 네트워크는 기다리지 않는다.
   await plan.load();

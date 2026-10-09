@@ -1,6 +1,6 @@
 // 안내문(앱 내장). 시트와 달리 여행 중에 바뀌지 않는다 — 고치려면 재배포해야 한다.
 // 그래서 어느 판인지 화면과 .ics에 박아 둔다.
-export const GUIDE_BUILT = '2026-10-07';
+export const GUIDE_BUILT = '2026-10-09';
 
 // 여행 전 카드에 뜨는 출발 문장. 사실 문장이므로 guide.js 안에 두고 마크를 단다
 // (render.js에 하드코딩돼 있으면 검증기가 못 본다).
@@ -63,6 +63,35 @@ export const EVENTS = [
     refs: [{ label: '아고다 예약번호', value: '1767601052' }],
   },
   {
+    id: 'shopping-walk',
+    rev: 1,
+    startUtc: '2026-10-09T21:00:00Z',
+    tz: 'America/Vancouver',
+    timeMark: '?',
+    title: 'Davie 점심 · Nelson Park · 장보기',
+    place: '밴쿠버',
+    alarm: false,
+    lines: [
+      { mark: '✓', text: '첫날은 Robson 대로 대신 Davie St — 낮은 상가가 이어진 웨스트엔드 동네 거리',
+        sub: '피곤하면 호텔까지 걸어서 3~5분이라 언제든 돌아온다' },
+      { mark: '✓', text: '호텔에서 Burrard St를 따라 남쪽으로 2블록 → Davie St에서 서쪽(Denman 방향)으로 걷는다' },
+      { mark: '?', text: '동쪽(Granville 방향)은 밤에 술집·클럽가라 어수선한 편 — 서쪽으로만' },
+      { mark: '✓', text: 'Nelson Park 산책 — Bute·Thurlow·Nelson·Comox St 사이 동네 공원, 호텔에서 1~2블록' },
+      { mark: '✓', text: '장보기는 London Drugs 1650 Davie St (Denman 근처) — 바디워시·물·내일 아침거리',
+        sub: '호텔에서 걸어서 15분쯤. 무거운 물은 돌아오는 길에 산다' },
+      { mark: '?', text: 'London Drugs 닫는 시간은 출처마다 18~21시로 다르다 — 구글 지도로 확인' },
+      { mark: '?', text: '같은 블록 Safeway는 재개발 기록이 있어 영업 여부 미확인. Shoppers Drug Mart는 Davie가 아니라 Denman St' },
+    ],
+    dest: {
+      name: 'London Drugs · Davie',
+      address: '1650 Davie St, Vancouver',
+      mapQuery: 'London Drugs 1650 Davie St Vancouver',
+      lat: 49.28553, lng: -123.13941,
+      via: 'walk',
+    },
+    refs: [],
+  },
+  {
     id: 'century-checkin',
     startUtc: '2026-10-09T22:00:00Z',
     tz: 'America/Vancouver',
@@ -89,40 +118,19 @@ export const EVENTS = [
     refs: [{ label: '아고다 예약번호', value: '1767601052' }],
   },
   {
-    id: 'shopping-walk',
-    startUtc: '2026-10-09T23:00:00Z',
-    tz: 'America/Vancouver',
-    timeMark: '?',
-    title: '숙소 근처 쇼핑 산책',
-    place: '밴쿠버',
-    alarm: false,
-    lines: [
-      { mark: '✓', text: 'Robson St → Granville St → Pacific Centre · London Drugs · Shoppers Drug Mart → Burrard St로 복귀',
-        sub: 'London Drugs는 Granville & Georgia 모퉁이. 다 걸어서 도는 거리' },
-      { mark: '✓', text: '눈에 띄면 Dollarama · Winners도 들른다' },
-      { mark: '✓', text: '내일 아침거리를 여기서 산다 — Shoppers·London Drugs에 기본 식료품이 있다' },
-      { mark: '?', text: '가게들은 보통 21~22시까지 — 매장마다 다르니 현장 확인' },
-    ],
-    dest: {
-      name: 'Pacific Centre · London Drugs',
-      address: '701 W Georgia St, Vancouver',
-      mapQuery: 'CF Pacific Centre Vancouver',
-      lat: 49.28225, lng: -123.11948,
-      via: 'walk',
-    },
-    refs: [],
-  },
-  {
     id: 'dinner-robson',
-    startUtc: '2026-10-10T02:00:00Z',
+    rev: 1,
+    startUtc: '2026-10-10T01:00:00Z',
     tz: 'America/Vancouver',
     timeMark: '?',
-    title: '저녁 · Robson',
+    title: '저녁 · Davie / 잉글리시 베이',
     place: '밴쿠버',
     alarm: false,
     lines: [
-      { mark: '?', text: '시각도 가게도 미정. 쇼핑 산책하다 Robson St 쪽에서 먹는다',
-        sub: '첫날이니 무리하지 않는다. Century Plaza에서 걸어서 갈 거리' },
+      { mark: '?', text: '여력이 되면. 시각도 가게도 미정 — Davie St 서쪽 끝·Denman St 쪽에서 먹는다',
+        sub: '첫날이니 무리하지 않는다. 힘들면 그냥 호텔로' },
+      { mark: '?', text: '잉글리시 베이 해변에서 노을 — 이 시기 일몰 18:30~18:40쯤',
+        sub: 'London Drugs에서 Davie St를 따라 서쪽으로 몇 분' },
       { mark: '✓', text: '중급 저녁 2인 세전 CA$80 기준',
         sub: '메인 1인 $22~35 + 생맥주 $8~11.75' },
       { mark: '✓', text: 'BC는 식당 음식에 GST 5%만 (PST 없음). 팁 18% 더하면 실질 +23%',
@@ -130,10 +138,10 @@ export const EVENTS = [
       { mark: '?', text: '카드 단말기는 세후 금액으로 팁 %를 잡는다 — 직접 입력하면 2~3% 아낀다' },
     ],
     dest: {
-      name: 'Robson Street',
-      address: 'Robson St, Vancouver',
-      mapQuery: 'Robson Street Vancouver',
-      lat: 49.29244, lng: -123.13693,
+      name: 'English Bay Beach',
+      address: 'Beach Ave & Denman St, Vancouver',
+      mapQuery: 'English Bay Beach Vancouver',
+      lat: 49.28648, lng: -123.14371,
       via: 'walk',
     },
     refs: [],

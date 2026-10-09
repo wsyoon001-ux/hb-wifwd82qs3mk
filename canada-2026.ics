@@ -3,17 +3,17 @@ VERSION:2.0
 PRODID:-//canada-2026//travel companion//KO
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:캐나다 2026 (안내문 2026-10-07판)
+X-WR-CALNAME:캐나다 2026 (안내문 2026-10-09판)
 BEGIN:VEVENT
 UID:yvr-arrival@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261009T183000Z
 DTEND:20261009T190000Z
 SUMMARY:YVR 도착
 LOCATION:Century Plaza Hotel\, 1015 Burrard St\, Vancouver
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 입국심사 → 수하물 찾기 → 국제선
   도착층(Level 2)으로 나온다\n✓ "Canada Line" / "Train to City" 
  표지판 → Level 4로 올라가 연결통로를 건너면 YVR-Airport
@@ -44,14 +44,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:century-checkin@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261009T220000Z
 DTEND:20261009T223000Z
 SUMMARY:Century Plaza 체크인
 LOCATION:Century Plaza Hotel\, 1015 Burrard St\, Vancouver
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 체크인 15:00 · 프리미엄 더블룸 1실 
  · 10/09→10/12 3박\n✓ 숙박비 986\,602원 선결제 완료 — 현
  장에서 낼 돈 없음\n   아고다 1767601052. BC 숙박세 19.4% 포
@@ -68,14 +68,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:capilano-shuttle@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261010T153000Z
 DTEND:20261010T160000Z
 SUMMARY:캐필라노 무료셔틀
 LOCATION:Canada Place (셔틀 승차)\, Canada Place\, Vancouver
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ Canada Place에서 승차. 무료 셔틀이라 
  따로 낼 돈 없다\n   다른 승차지: Hyatt Regency(Melville St) · 
  Blue Horizon(Robson St)\n✓ 다운타운 출발 08:30~17:00\, 공원 출
@@ -95,14 +95,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:vkpc-service@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261011T183000Z
 DTEND:20261011T190000Z
 SUMMARY:VKPC 예배
 LOCATION:밴쿠버한인장로교회 (VKPC)\, 205 W 10th Ave\, Vancouver
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 밴쿠버한인장로교회(VKPC) 2부 예배 1
  1:30\n   205 W 10th Ave · Mount Pleasant · 604-875-1200\n? 아내는 오
  전에 그랜빌 아일랜드 시장 — 아내와 확인 필요\n? 가는
@@ -120,14 +120,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:century-checkout@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261012T180000Z
 DTEND:20261012T183000Z
 SUMMARY:Century Plaza 체크아웃
 LOCATION:Century Plaza Hotel\, 1015 Burrard St\, Vancouver
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n? 오전은 숙소 근처 자유시간 · 브런치
   — 가게 미정\n✓ 체크아웃 11:00. 13:40 AC8024라 11:00~11:15에
   나간다\n✓ 오늘은 캐나다 추수감사절(BC 공휴일) — 가
@@ -143,15 +143,15 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:downtown-to-yvr@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261012T181000Z
 DTEND:20261012T184000Z
 SUMMARY:다운타운 → YVR
 LOCATION:YVR 국내선 터미널\, Vancouver International Airport\, Richmo
  nd\, BC
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 11:00~11:15 출발 → 12:10 전 공항 도착 
  (국내선 13:40의 90분 전)\n✓ 캐나다라인 2인 CA$10.20 — 공
  항 가는 방향은 AddFare가 없다\n   올 때 2인 CA$23.20이었던 
@@ -168,15 +168,15 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:ac8024@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261012T204000Z
 DTEND:20261012T211000Z
 SUMMARY:YVR 출발 · AC8024
 LOCATION:YVR 국내선 터미널\, Vancouver International Airport\, Richmo
  nd\, BC
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ AC8024  YVR 13:40 → YZF 17:06\n? 위탁수하
  물 2개 CA$45×2 + GST (약 91\,193원) — 예약 클래스에 따라 
  무료일 수 있다\n   항공권 예약 확인서에서 Basic/Standard
@@ -193,14 +193,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:yzf-arrival@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261012T230600Z
 DTEND:20261012T233600Z
 SUMMARY:YZF 도착
 LOCATION:Airbnb — Cozy Frame Lake Suite\, 4811 Matonabee St\, Yellowknife
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 택시로 숙소. 약 6.5km\, CA$24.50 + 팁 CA
  $3\n   미터제. 기본 CA$4.70 + 100m당 CA$0.31 (시 조례 5143)\n✓ 
  옐로나이프에 Uber·Lyft 없다\n✓ 택시 3곳 — 먼저 받는 
@@ -221,14 +221,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:airbnb-checkin@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261013T000000Z
 DTEND:20261013T003000Z
 SUMMARY:Airbnb 체크인
 LOCATION:Airbnb — Cozy Frame Lake Suite\, 4811 Matonabee St\, Yellowknife
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 4811 Matonabee St · 10/12→10/15 3박 · 완
  납 (939\,324원)\n✓ 본채 뒤편 차고 옆의 별도 캐리지 하우
  스 스위트 — 현관문은 건물 오른편\n   호스트 안내. 바
@@ -249,14 +249,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:aurora-1@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261013T040000Z
 DTEND:20261013T080000Z
 SUMMARY:오로라 헌팅 1박차
 LOCATION:Capital Suites (픽업)\, 5603 50th Ave\, Yellowknife
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ Capital Suites 로비에서 대기. 숙소에
  서 도보 7분\n   5603 50th Ave · 실측 207~554m · 픽업 15~20분 
  전 로비 도착\n? 투어 22:00~02:00. 가이드 팁 2인 CA$30 현금 
@@ -275,14 +275,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:aurora-2@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261014T040000Z
 DTEND:20261014T080000Z
 SUMMARY:오로라 헌팅 2박차
 LOCATION:Capital Suites (픽업)\, 5603 50th Ave\, Yellowknife
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ Capital Suites 로비 픽업. 숙소에서 도
  보 7분\, 15~20분 전 도착\n? 가이드 팁 2인 CA$30 현금 — 하
  차 때 바로 줘야 하니 봉투에 미리 나눠둔다\n   1인 1박 $
@@ -302,14 +302,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:aurora-camp@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261015T040000Z
 DTEND:20261015T080000Z
 SUMMARY:오로라 캠프
 LOCATION:Capital Suites (픽업)\, 5603 50th Ave\, Yellowknife
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 마지막 밤. Capital Suites 로비 픽업\, 1
  5~20분 전 도착\n? 가이드 팁 2인 CA$30 현금 — 3박 합계 CA$9
  0 중 마지막\n✓ 내일 11:00 체크아웃이다. 짐은 오늘 나가
@@ -326,14 +326,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:airbnb-checkout@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261015T170000Z
 DTEND:20261015T173000Z
 SUMMARY:Airbnb 체크아웃
 LOCATION:Airbnb — Cozy Frame Lake Suite\, 4811 Matonabee St\, Yellowknife
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 체크아웃 11:00. 비행이 19:15이라 8시
  간이 뜬다\n? 짐 보관은 호스트에게 먼저 묻고\, 안 되면 
  근처 식당·카페에 부탁\n✓ 에어비앤비는 하우스키핑 
@@ -349,14 +349,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:yzf-taxi@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261015T233000Z
 DTEND:20261016T000000Z
 SUMMARY:숙소 → YZF 택시
 LOCATION:Yellowknife Airport (YZF)\, Yellowknife Airport\, Yellowknife\, NT
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 약 6.5km\, CA$24.50 + 팁 CA$3. 현금으로 
  준비해 둔다\n✓ Uber·Lyft 없다. 미리 전화로 콜\n   시 택
  시 조례로 차량공유가 불가능하다. 앱은 없다\n✓ 택시 3
@@ -375,14 +375,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:4n880@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261016T011500Z
 DTEND:20261016T014500Z
 SUMMARY:YZF 출발 · 4N880
 LOCATION:Yellowknife Airport (YZF)\, Yellowknife Airport\, Yellowknife\, NT
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 4N880 (에어노스)  YZF 19:15 → YVR 20:50\n
  ✓ 에어노스는 위탁 2개 무료 — 짐은 이 편에 몰아 싣는
  다\n✓ 내일 AC063은 위탁 1인 1개(2인 2개)다. YVR에서 짐을 
@@ -397,14 +397,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:yvr-arrival-2@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261016T035000Z
 DTEND:20261016T042000Z
 SUMMARY:YVR 도착 → Radisson 셔틀
 LOCATION:Radisson Blu Vancouver Airport\, 3500 Cessna Dr\, Richmond\, BC
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 국내선 짐 찾는 곳은 Level 2 → 짐 찾
  고 한 층 올라가 출발층 Level 3 바깥 무료 셔틀(courtesy shut
  tle) 승차 구역\n   YVR 공식 셔틀 안내 기준. 기둥 번호·구
@@ -426,14 +426,14 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:radisson-checkout@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261016T154500Z
 DTEND:20261016T161500Z
 SUMMARY:Radisson 체크아웃
 LOCATION:Radisson Blu Vancouver Airport\, 3500 Cessna Dr\, Richmond\, BC
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ 아침에 짐 재정리 — AC063은 위탁 1
  인 1개 23kg\n✓ 08:45에 체크아웃. 정시는 11:00이지만 12:20 
  국제선은 3시간 전 도착 권장이라 그때는 늦다\n   호텔 
@@ -448,15 +448,15 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:radisson-shuttle-out@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261016T160000Z
 DTEND:20261016T163000Z
 SUMMARY:Radisson → YVR 셔틀 (시각 미정)
 LOCATION:YVR 국제선 터미널\, Vancouver International Airport\, Richmo
  nd\, BC
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n※ 이 시각은 미확정입니다 — 업체 확
  인 후 다시 받으세요\n\n✓ 무료 셔틀 24시간 — 요금 없
  다\n? 기사 팁 CA$5 (관례\, 출처 없음)\n? 30분 간격\, 매시 :
@@ -473,15 +473,15 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:ac063@canada-2026
-DTSTAMP:20261007T000000Z
+DTSTAMP:20261009T000000Z
 SEQUENCE:0
-LAST-MODIFIED:20261007T000000Z
+LAST-MODIFIED:20261009T000000Z
 DTSTART:20261016T192000Z
 DTEND:20261016T195000Z
 SUMMARY:YVR 출발 · AC063
 LOCATION:YVR 국제선 터미널\, Vancouver International Airport\, Richmo
  nd\, BC
-DESCRIPTION:[안내문 2026-10-07판] 시각·금액이 앱과 다르면 
+DESCRIPTION:[안내문 2026-10-09판] 시각·금액이 앱과 다르면 
  앱이 맞습니다\n\n✓ AC063  YVR 10/16 12:20 → 인천 10/17 16:05\n
  ✓ 위탁 1인 1개 23kg (2인 2개)\, 세 변 합 158cm\n   Trip.com 예
  약 수하물 화면 기준 (2026-10-07 확인). 에어노스로 더 싣

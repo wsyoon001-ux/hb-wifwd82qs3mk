@@ -117,9 +117,13 @@ function paintStamp() {
   if (n) s.textContent += ` · 올리지 못한 수정 ${n}건`;
 }
 
+// 돈 탭은 여행 중엔 아무에게도 안 보인다(2026-10-11, 가족도 앱을 설치할 수 있게).
+// 코드와 데이터는 그대로 — 귀국 후 정산할 때 true로 되돌리면 우리 둘 폰에서 다시 보인다.
+const MONEY_TAB = false;
+
 // 돈 탭은 우리 둘 폰에서만. 사진 암호를 넣는 순간 나타나도록 그릴 때마다 본다.
 function applyMoney() {
-  const on = showMoney({ family, pass: lsGet('photos-pass') });
+  const on = MONEY_TAB && showMoney({ family, pass: lsGet('photos-pass') });
   const b = document.querySelector('nav button[data-view="money"]');
   b?.classList.toggle('hidden', !on);
   if (!on && !views.money.classList.contains('hidden')) document.querySelector('nav button[data-view="now"]')?.click();

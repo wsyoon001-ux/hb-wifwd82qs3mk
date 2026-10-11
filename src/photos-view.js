@@ -1,7 +1,8 @@
 import { PHOTOS_URL } from '../data/photos-config.js';
 import { createPhotoApi, PhotoApiError } from './photos-api.js';
-import { idbLocal, syncPhotos, sortNewest, b64ToBlob, removeMany, toFiles, dragRange, dragIntent } from './photos-store.js';
-import { resizeToJpeg } from './photos-resize.js';
+import { idbLocal, syncPhotos, sortNewest, b64ToBlob, removeMany, toFiles, dragRange, dragIntent, takenName, progressText } from './photos-store.js';
+import { resizeToJpeg, exifTakenAt } from './photos-resize.js';
+import { familyLink } from './family.js';
 
 const PASS_KEY = 'photos-pass';
 const URL_KEY = 'photos-url';   // 로컬 가짜 서버로 확인할 때만 쓴다
@@ -34,7 +35,8 @@ const button = (c, txt, onClick) => {
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* 이번 실행 동안만 기억 */ } }
 
-export function initPhotos(root) {
+// readOnly: 가족 보기 — 보기·저장만, 올리기·지우기 없음.
+export function initPhotos(root, { readOnly = false, onPass = () => {} } = {}) {
   const url = lsGet(URL_KEY) || PHOTOS_URL;
   let pass = lsGet(PASS_KEY);
   const api = createPhotoApi({ url, getPass: () => pass });
@@ -52,6 +54,7 @@ export function initPhotos(root) {
   let bulkArmed = false;    // 여러 장 삭제 버튼을 한 번 눌렀나
   let busy = false;         // 여러 장 지우는 중
   let dragJustEnded = false; // 끌기 직후 따라오는 click 한 번은 무시한다
+  let batch = null;          // 여러 장 올리기 진행: { total, done, startedAt }. 다 끝나면 null
 
   // ＋ 버튼과 파일 칸은 한 번만 만든다. 사진첩에서 고르는 사이 동기화가 끝나 다시 그릴 때
   // 새로 만들면, 화면에서 떨어진 옛 칸으로 선택 결과가 가서 아무 일도 안 일어날 수 있다.
@@ -63,7 +66,7 @@ export function initPhotos(root) {
   input.addEventListener('change', () => { const fs = [...input.files]; input.value = ''; addFiles(fs); });
   add.append(input);
 
-  const setPass = v => { pass = v; lsSet(PASS_KEY, v); };
+  const setPass = v => { pass = v; lsSet(PASS_KEY, v); onPass(); };
   const urlFor = p => {
     if (!urls.has(p.id)) urls.set(p.id, URL.createObjectURL(p.blob));
     return urls.get(p.id);
@@ -98,11 +101,22 @@ export function initPhotos(root) {
     }
   }
 
+  // 찍은 시각: EXIF가 먼저, 없으면 파일 수정 시각(갤럭시는 대개 찍은 시각, 아이폰은 고른 시각).
+  async function takenAt(file) {
+    try {
+      const at = exifTakenAt(await file.slice(0, 256 * 1024).arrayBuffer());
+      if (at) return at;
+    } catch { /* 못 읽으면 아래로 */ }
+    return file.lastModified ? new Date(file.lastModified) : null;
+  }
+
   async function upload(t) {
     t.state = 'busy';
     paint();
     try {
+      t.takenAt ??= await takenAt(t.file);
       const r = await resizeToJpeg(t.file);
+      r.name = takenName(r.name, t.takenAt);
       const { id, createdAt } = await api.upload(r);
       await idbLocal.put({ id, name: r.name, createdAt, blob: b64ToBlob(r.data, r.mime) });
       pending = pending.filter(x => x !== t);
@@ -120,8 +134,15 @@ export function initPhotos(root) {
     if (!navigator.onLine) { status = MSG.needNet; paint(); return; }
     const items = files.map(file => ({ file, preview: URL.createObjectURL(file), state: 'busy' }));
     pending = [...items, ...pending];
+    // 올리는 도중에 더 고르면 같은 진행 막대에 더한다
+    if (batch) batch.total += items.length;
+    else batch = { total: items.length, done: 0, startedAt: Date.now() };
     paint();
-    for (const t of items) await upload(t);   // 한 장씩 — 폰 메모리, Apps Script 동시 실행 한도
+    for (const t of items) {
+      await upload(t);   // 한 장씩 — 폰 메모리, Apps Script 동시 실행 한도
+      if (batch) batch.done++;
+    }
+    if (batch && batch.done >= batch.total) { batch = null; paint(); }
   }
 
   function dropPending(t) {
@@ -254,11 +275,23 @@ export function initPhotos(root) {
     grid.addEventListener('pointercancel', () => { g = null; });
   }
 
+  // 가족에게 줄 링크. 열면 돈 탭·올리기·지우기·일정 수정이 숨은 '가족 보기'가 된다.
+  async function copyFamilyLink() {
+    const link = familyLink(location.href, pass);
+    try {
+      if (navigator.share) await navigator.share({ title: '캐나다 2026', url: link });
+      else { await navigator.clipboard.writeText(link); status = '가족 링크를 복사했습니다'; paint(); }
+    } catch (e) {
+      if (e?.name !== 'AbortError') { status = '링크를 못 만들었습니다'; paint(); }
+    }
+  }
+
   function passForm() {
     const f = el('form', 'card');
     f.append(el('div', 'title', '사진 암호'));
     f.append(el('div', passWrong ? 'sub warn' : 'sub',
-      passWrong ? '암호가 틀렸습니다. 다시 넣어 주세요.' : '둘이 정한 공용 암호를 넣으세요. 이 폰에 기억됩니다.'));
+      readOnly ? '이 링크는 더 이상 쓸 수 없습니다. 새 링크를 받아 주세요.'
+        : passWrong ? '암호가 틀렸습니다. 다시 넣어 주세요.' : '둘이 정한 공용 암호를 넣으세요. 이 폰에 기억됩니다.'));
     const i = el('input', 'photo-pass');
     i.type = 'password';
     i.autocomplete = 'current-password';
@@ -321,10 +354,10 @@ export function initPhotos(root) {
     const bar = el('div', 'photo-viewer-bar');
     bar.append(
       button('photo-btn', '닫기', () => { viewer = null; armed = false; paint(); }),
-      button('photo-btn danger', armed ? '한 번 더 누르면 삭제' : '삭제', () => {
-        if (armed) remove(p); else { armed = true; paint(); }
-      }),
     );
+    if (!readOnly) bar.append(button('photo-btn danger', armed ? '한 번 더 누르면 삭제' : '삭제', () => {
+      if (armed) remove(p); else { armed = true; paint(); }
+    }));
     v.append(img, bar);
     return v;
   }
@@ -334,15 +367,29 @@ export function initPhotos(root) {
     if (!url) { root.append(el('div', 'card', MSG.noconfig)); return; }
     if (!pass) { root.append(passForm()); return; }
     if (status) root.append(el('div', 'photo-status', status));
+    if (batch && batch.total > 1) {
+      const p = el('div', 'photo-progress');
+      p.append(el('div', 'photo-progress-text', progressText({ ...batch, elapsedMs: Date.now() - batch.startedAt })));
+      const bar = el('div', 'photo-progress-bar');
+      const fill = el('div');
+      fill.style.width = `${Math.round((batch.done / batch.total) * 100)}%`;
+      bar.append(fill);
+      p.append(bar);
+      const failed = pending.filter(t => t.state === 'fail').length;
+      if (failed) p.append(el('div', 'sub warn', `실패 ${failed}장 — 끝난 뒤 사진의 '다시'를 누르세요`));
+      root.append(p);
+    }
 
     // 동기화로 사라진 사진은 선택에서도 뺀다
     const alive = new Set(photos.map(p => p.id));
     for (const id of selected) if (!alive.has(id)) selected.delete(id);
 
-    const top = el('div', 'photo-top');
-    top.append(add);
-    if (photos.length && !selecting) top.append(button('photo-btn photo-select', '선택', () => { selecting = true; viewer = null; paint(); }));
-    root.append(top);
+    if (!readOnly) {
+      const top = el('div', 'photo-top');
+      top.append(add);
+      if (photos.length && !selecting) top.append(button('photo-btn photo-select', '선택', () => { selecting = true; viewer = null; paint(); }));
+      root.append(top);
+    }
     if (selecting) root.append(el('div', 'sub', '사진을 눌러 고르세요'));
 
     if (!pending.length && !photos.length) root.append(el('div', 'sub', syncing ? '불러오는 중…' : '아직 사진이 없습니다'));
@@ -351,6 +398,8 @@ export function initPhotos(root) {
     photos.forEach((p, i) => grid.append(photoTile(p, i)));
     root.append(grid);
     if (selecting) { grid.classList.add('selecting'); root.append(selectBar()); wireDrag(grid); }
+
+    if (!readOnly && !selecting) root.append(button('photo-btn photo-family', '가족 공유 링크 복사', copyFamilyLink));
 
     const open = viewer && photos.find(p => p.id === viewer);
     if (open) root.append(viewerEl(open));

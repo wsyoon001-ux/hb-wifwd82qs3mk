@@ -12,6 +12,7 @@ import { createPlanSync } from './src/plan-store.js';
 import { restoreRecord } from './src/plan-form.js';
 import { openEditor } from './src/plan-edit-view.js';
 import { initEmergency } from './src/emergency-view.js';
+import { FAMILY_KEY, familyPassFromHash, showMoney } from './src/family.js';
 
 const state = { rows: [], updatedAt: null, now: null, daysLeft: 0, events: EVENTS, deleted: [], planNotice: '', planAuth: false };
 let mapView = null;
@@ -20,6 +21,16 @@ const baseById = new Map(EVENTS.map(e => [e.id, e]));
 // 사진 탭과 같은 서버·암호. 암호는 사진 탭이 바꿀 수 있으므로 부를 때마다 읽는다.
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* 이번 실행 동안만 */ } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch { /* 없음 */ } }
+
+// 가족 링크(#family=암호)로 열었으면 암호를 저장하고 주소에서 지운다 — 캡처·공유에 암호가 안 남게.
+// 우리 폰에서 실수로 열었으면 주소 끝에 #owner를 붙여 한 번 열면 풀린다.
+const linkPass = familyPassFromHash(location.hash);
+if (linkPass) { lsSet('photos-pass', linkPass); lsSet(FAMILY_KEY, '1'); }
+if (location.hash === '#owner') lsDel(FAMILY_KEY);
+if (linkPass || location.hash === '#owner') history.replaceState(null, '', location.pathname + location.search);
+const family = lsGet(FAMILY_KEY) === '1';
+
 let passOverride = null;
 const plan = createPlanSync({
   api: createPlanApi({ url: lsGet('photos-url') || PHOTOS_URL, getPass: () => passOverride ?? lsGet('photos-pass') }),
@@ -62,7 +73,7 @@ function onSave(record, { timeChanged } = {}) {
   if (timeChanged) toast('저장했습니다. 폰 캘린더 알람은 따로 고치세요');
 }
 
-state.actions = {
+if (!family) state.actions = {
   onEdit: e => openEditor({ event: e, base: baseById.get(e.id) ?? null, dayKey: null, events: state.events, onSave }),
   onAdd: day => openEditor({ event: null, base: null, dayKey: day, events: state.events, onSave }),
   onRestore: e => onSave(restoreRecord(e, baseById.has(e.id))),
@@ -106,8 +117,17 @@ function paintStamp() {
   if (n) s.textContent += ` · 올리지 못한 수정 ${n}건`;
 }
 
+// 돈 탭은 우리 둘 폰에서만. 사진 암호를 넣는 순간 나타나도록 그릴 때마다 본다.
+function applyMoney() {
+  const on = showMoney({ family, pass: lsGet('photos-pass') });
+  const b = document.querySelector('nav button[data-view="money"]');
+  b?.classList.toggle('hidden', !on);
+  if (!on && !views.money.classList.contains('hidden')) document.querySelector('nav button[data-view="now"]')?.click();
+}
+
 function paint() {
   recompute();
+  applyMoney();
   renderNow(views.now, state);
   renderDays(views.days, state);
   renderMoney(views.money, state);
@@ -153,7 +173,7 @@ try {
 
   // 사진 탭은 스스로 상태를 가진다. 실패해도 나머지 탭은 떠야 해서 따로 감싼다.
   let photosView = null;
-  try { photosView = initPhotos(views.photos); } catch (err) { views.photos.textContent = '사진 탭을 못 열었습니다: ' + err.message; }
+  try { photosView = initPhotos(views.photos, { readOnly: family, onPass: () => paint() }); } catch (err) { views.photos.textContent = '사진 탭을 못 열었습니다: ' + err.message; }
 
   // 지도 탭도 스스로 상태를 가진다. 구글이 안 떠도 나머지 탭은 떠야 한다.
   try { mapView = initMap(views.map, { events: state.events }); } catch (err) { views.map.textContent = '지도 탭을 못 열었습니다: ' + err.message; }

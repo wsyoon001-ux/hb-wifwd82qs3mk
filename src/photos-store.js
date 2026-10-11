@@ -11,8 +11,35 @@ export function diffPhotos(localIds, remote) {
   };
 }
 
+// 찍은 시각은 서버를 고치지 않으려고 파일 이름 앞에 붙여 둔다: t20261010T212301Z~IMG_1234.jpg
+// 이름에 없으면(예전에 올린 사진) 올린 시각으로 친다.
+const TAKEN_RE = /^t(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z~/;
+
+export function takenName(name, takenAt) {
+  if (!(takenAt instanceof Date) || isNaN(takenAt)) return name;
+  const stamp = takenAt.toISOString().slice(0, 19).replace(/[-:]/g, '');
+  return `t${stamp}Z~${name}`;
+}
+
+export function photoTime(p) {
+  const m = TAKEN_RE.exec(p.name ?? '');
+  return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}.000Z` : p.createdAt;
+}
+
 export function sortNewest(photos) {
-  return [...photos].sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+  return [...photos].sort((a, b) => {
+    const x = photoTime(a), y = photoTime(b);
+    return x < y ? 1 : x > y ? -1 : 0;
+  });
+}
+
+// 여러 장 올리기 진행 문구. 남은 시간은 지금까지 한 장에 걸린 평균으로 잡는다.
+export function progressText({ done, total, elapsedMs }) {
+  const head = `${Math.min(done + 1, total)} / ${total} 올리는 중`;
+  if (!done) return head + ' · 남은 시간 계산 중';
+  const leftMs = (elapsedMs / done) * (total - done);
+  const min = Math.round(leftMs / 60000);
+  return head + ' · 남은 시간 ' + (min < 1 ? '1분 미만' : `약 ${min}분`);
 }
 
 export function b64ToBlob(data, mime) {

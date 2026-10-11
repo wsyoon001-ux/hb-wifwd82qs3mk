@@ -99,14 +99,16 @@ export function renderNow(root, state) {
   if (!current && !next) {
     const c = el('div', 'card');
     c.append(el('div', 'title', '다음 일정 없음'));
-    c.append(el('div', 'sub', '이 날짜는 안내문에 아직 안 들어갔습니다. 돈 화면과 시트를 보세요.'));
+    c.append(el('div', 'sub', '이 날짜는 안내문에 아직 안 들어갔습니다. 날짜 화면과 시트를 보세요.'));
     c.append(builtTag());
     root.append(c);
     return;
   }
 
+  // 지금 하는 일정이 없으면(밤사이·이른 아침) 다음 일정을 카드로 크게 보여 준다.
   if (current) root.append(card(current));
-  if (next) {
+  else root.append(card(next));
+  if (next && current) {
     const sameDay = !current || fmtDateKo(next.startUtc, next.tz) === fmtDateKo(current.startUtc, current.tz);
     const when = sameDay
       ? fmtTime(next.startUtc, next.tz)

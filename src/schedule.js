@@ -50,9 +50,9 @@ export function pickNow(events, nowUtc) {
     else { next = sorted[i]; break; }
   }
 
-  // 여행 중이지만 마지막 일정도 한참 지난 경우. 지난 카드를 계속 띄우면
-  // 이틀 전 오로라 픽업이 '지금'인 것처럼 보인다 — 차라리 비운다.
-  if (current && !next && now > new Date(current.startUtc).getTime() + STALE_MS) current = null;
+  // 지난 일정이 한참 지났으면 내린다. 다음 일정이 남아 있어도 마찬가지 — 안 그러면
+  // 아침에 일어나도 어젯밤 저녁 카드가 '지금'에 떠 있다(2026-10-11 실사용에서 발견).
+  if (current && now > new Date(current.startUtc).getTime() + STALE_MS) current = null;
   if (!current && !next) return empty;
 
   const anchor = current ?? next;

@@ -173,12 +173,10 @@ export function initPhotos(root, { readOnly = false, onPass = () => {} } = {}) {
 
   // 공유창을 띄운다. 아이폰은 여기서 "N개 이미지 저장"을 누르면 사진 앱에 들어간다.
   // 공유창이 없는 브라우저(PC 등)는 한 장씩 내려받는다.
-  function saveSelected() {
-    const picked = photos.filter(p => selected.has(p.id));
-    if (!picked.length) return;
+  function savePhotos(picked, done) {
     const files = toFiles(picked);
     if (navigator.canShare?.({ files })) {
-      navigator.share({ files }).then(endSelect).catch(e => {
+      navigator.share({ files }).then(done).catch(e => {
         if (e?.name !== 'AbortError') { status = '저장 창을 못 열었습니다'; paint(); }
       });
       return;
@@ -191,7 +189,12 @@ export function initPhotos(root, { readOnly = false, onPass = () => {} } = {}) {
       a.click();
       a.remove();
     }
-    endSelect();
+    done();
+  }
+
+  function saveSelected() {
+    const picked = photos.filter(p => selected.has(p.id));
+    if (picked.length) savePhotos(picked, endSelect);
   }
 
   async function deleteSelected() {
@@ -354,7 +357,23 @@ export function initPhotos(root, { readOnly = false, onPass = () => {} } = {}) {
     const bar = el('div', 'photo-viewer-bar');
     bar.append(
       button('photo-btn', '닫기', () => { viewer = null; armed = false; paint(); }),
+      button('photo-btn', '저장', () => savePhotos([p], () => {})),
     );
+    // 옆으로 밀면 앞뒤 사진. 세로로 더 많이 움직였거나 짧으면 무시한다. 끝에서는 멈춘다.
+    let sx = null, sy = 0;
+    img.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) { sx = null; return; }
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    }, { passive: true });
+    img.addEventListener('touchend', e => {
+      if (sx === null) return;
+      const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+      sx = null;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+      const i = photos.indexOf(p) + (dx < 0 ? 1 : -1);
+      if (i < 0 || i >= photos.length) return;
+      viewer = photos[i].id; armed = false; paint();
+    });
     if (!readOnly) bar.append(button('photo-btn danger', armed ? '한 번 더 누르면 삭제' : '삭제', () => {
       if (armed) remove(p); else { armed = true; paint(); }
     }));
